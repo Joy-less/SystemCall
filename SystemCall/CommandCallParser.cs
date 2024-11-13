@@ -173,7 +173,7 @@ public static class CommandCallParser {
                 // Move past contents
                 Index = EndContentsIndex;
 
-                // Add HJSON as single token
+                // Add Hjson as single token
                 Token.Append(Contents);
             }
             else if (char.IsWhiteSpace(Char)) {

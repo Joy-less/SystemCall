@@ -1,7 +1,7 @@
 ﻿namespace SystemCall.Tests;
 
 [TestClass]
-public class FormatTest {
+public class SyntaxTest {
     private readonly Command[] Commands = [
         new("kill_user", "kill {user} for {reason}"),
         new("explode", "[explode, blow up, self destruct]"),

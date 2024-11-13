@@ -22,11 +22,11 @@ public record CommandCall(Command Command, Dictionary<string, string> Arguments,
     public readonly int TokenCount = TokenCount;
 
     /// <summary>
-    /// Deserializes the passed HJSON argument.
+    /// Deserializes the passed Hjson argument.
     /// </summary>
     public bool TryGetArgument(string Name, [NotNullWhen(true)] out JsonValue? Argument) {
         try {
-            // Convert HJSON to object
+            // Convert Hjson to object
             Argument = HjsonValue.Parse(Arguments[Name]);
             return true;
         }
@@ -36,11 +36,11 @@ public record CommandCall(Command Command, Dictionary<string, string> Arguments,
         }
     }
     /// <summary>
-    /// Deserializes the passed HJSON argument as the given type.
+    /// Deserializes the passed Hjson argument as the given type.
     /// </summary>
     public bool TryGetArgument<T>(string Name, [NotNullWhen(true)] out T? Argument) {
         try {
-            // Convert HJSON to JSON
+            // Convert Hjson to JSON
             string ArgumentJson = HjsonValue.Parse(Arguments[Name]).ToString();
             // Convert JSON to object
             Argument = JsonSerializer.Deserialize<T>(ArgumentJson)!;
@@ -52,7 +52,7 @@ public record CommandCall(Command Command, Dictionary<string, string> Arguments,
         }
     }
     /// <summary>
-    /// Deserializes the passed HJSON argument.
+    /// Deserializes the passed Hjson argument.
     /// </summary>
     public JsonValue GetArgument(string Name) {
         if (TryGetArgument(Name, out JsonValue? Argument)) {
@@ -61,7 +61,7 @@ public record CommandCall(Command Command, Dictionary<string, string> Arguments,
         throw new CallArgumentException($"Invalid argument: '{Name}'");
     }
     /// <summary>
-    /// Deserializes the passed HJSON argument as the given type.
+    /// Deserializes the passed Hjson argument as the given type.
     /// </summary>
     public T GetArgument<T>(string Name) {
         if (TryGetArgument(Name, out T? Argument)) {
@@ -70,7 +70,7 @@ public record CommandCall(Command Command, Dictionary<string, string> Arguments,
         throw new CallArgumentException($"Invalid argument: '{Name}' ({typeof(T).Name})");
     }
     /// <summary>
-    /// Deserializes the passed HJSON argument or returns the default.
+    /// Deserializes the passed Hjson argument or returns the default.
     /// </summary>
     public JsonValue? GetArgument(string Name, JsonValue? Default = default) {
         if (TryGetArgument(Name, out JsonValue? Argument)) {
@@ -79,7 +79,7 @@ public record CommandCall(Command Command, Dictionary<string, string> Arguments,
         return Default;
     }
     /// <summary>
-    /// Deserializes the passed HJSON argument as the given type or returns the default.
+    /// Deserializes the passed Hjson argument as the given type or returns the default.
     /// </summary>
     public T? GetArgumentOrDefault<T>(string Name, T? Default = default) {
         if (TryGetArgument(Name, out T? Argument)) {
