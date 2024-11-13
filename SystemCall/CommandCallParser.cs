@@ -1,0 +1,314 @@
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
+
+namespace SystemCall;
+
+/// <summary>
+/// Contains methods for interpreting command calls.
+/// </summary>
+public static class CommandCallParser {
+    /// <summary>
+    /// Parses the input for a sequence of command calls, runs them by invoking the callback function and compiles their output to a string.
+    /// </summary>
+    /// <exception cref="CallSyntaxException"/>
+    /// <exception cref="CommandNotFoundException"/>
+    /// <exception cref="CallArgumentException"/>
+    public static async Task<string> InterpretAsync(string Input, IEnumerable<Command> Commands, Func<CommandCall, Task<string?>> RunCommandAsync, string OutputSeparator = "\n") {
+        // Run commands in input
+        StringBuilder Output = new();
+        try {
+            List<CommandCall> Calls = ParseCalls(Input, Commands).ToList();
+            foreach (CommandCall Call in Calls) {
+                Output.AppendLine(await RunCommandAsync(Call) + OutputSeparator);
+            }
+        }
+        // Command errored
+        catch (SystemCallException Exception) {
+            Output.AppendLine(Exception.Message + OutputSeparator);
+        }
+        // Return success
+        return Output.ToString().Trim();
+    }
+    /// <inheritdoc cref="InterpretAsync(string, IEnumerable{Command}, Func{CommandCall, Task{string?}}, string)"/>
+    public static string Interpret(string Input, IEnumerable<Command> Commands, Func<CommandCall, string?> RunCommand, string OutputSeparator = "\n") {
+        // Run commands in input
+        StringBuilder Output = new();
+        try {
+            List<CommandCall> Calls = ParseCalls(Input, Commands).ToList();
+            foreach (CommandCall Call in Calls) {
+                Output.Append(RunCommand(Call) + OutputSeparator);
+            }
+        }
+        // Command errored
+        catch (SystemCallException Exception) {
+            Output.Append(Exception.Message + OutputSeparator);
+        }
+        // Return success
+        return Output.ToString().Trim();
+    }
+    /// <summary>
+    /// Parses the input for a sequence of command calls.
+    /// </summary>
+    /// <exception cref="CallSyntaxException"/>
+    /// <exception cref="CommandNotFoundException"/>
+    public static IEnumerable<CommandCall> ParseCalls(string Input, IEnumerable<Command> Commands) {
+        // Parse each command call from input tokens
+        foreach (List<string> CommandTokens in TokenizeInput(Input)) {
+            if (TryParseCall(CommandTokens.ToArray(), Commands, out CommandCall? Call)) {
+                yield return Call;
+            }
+            else {
+                throw new CommandNotFoundException($"No matching command: `{string.Join(' ', CommandTokens)}`");
+            }
+        }
+    }
+    /// <summary>
+    /// Parses the input for exactly one command call.
+    /// </summary>
+    /// <exception cref="CallSyntaxException"/>
+    /// <exception cref="CommandNotFoundException"/>
+    public static CommandCall ParseCall(string Input, IEnumerable<Command> Commands) {
+        return ParseCalls(Input, Commands).SingleOrDefault()
+            ?? throw new CallSyntaxException($"Expected single command: `{Input}`");
+    }
+    /// <summary>
+    /// Parses a list of tokens for each command call in the input.
+    /// </summary>
+    /// <exception cref="CallSyntaxException"/>
+    public static List<List<string>> TokenizeInput(string Input) {
+        List<List<string>> TokensPerCall = [];
+        List<string> Tokens = [];
+        StringBuilder Token = new();
+        char? InQuote = null;
+        bool Escaping = false;
+
+        bool TryCommitTokens() {
+            if (Tokens.Count == 0) {
+                return false;
+            }
+            TokensPerCall.Add(Tokens);
+            Tokens = [];
+            return true;
+        }
+        bool TryAddToken() {
+            if (Token.Length == 0) {
+                return false;
+            }
+            Tokens.Add(Token.ToString());
+            Token.Clear();
+            return true;
+        }
+
+        foreach (char Char in Input) {
+            if (Escaping) {
+                Escaping = false;
+
+                // Newline
+                if (Char is 'n') {
+                    Token.Append('\n');
+                }
+                // Carriage return
+                else if (Char is 'r') {
+                    Token.Append('\r');
+                }
+                // Alert
+                else if (Char is 'a') {
+                    Token.Append('\a');
+                }
+                // Backspace
+                else if (Char is 'b') {
+                    Token.Append('\b');
+                }
+                // Character
+                else {
+                    Token.Append(Char);
+                }
+            }
+            else if (Char is '\\') {
+                // Escaped backslash
+                if (Escaping) {
+                    Escaping = false;
+                    Token.Append(Char);
+                }
+                // Start escaping character
+                else {
+                    Escaping = true;
+                }
+            }
+            else if (Char is '"' or '\'') {
+                // Quote inside different quotes
+                if (InQuote is not null && InQuote != Char) {
+                    Token.Append(Char);
+                }
+                // End quote
+                else if (InQuote == Char) {
+                    InQuote = null;
+                    Token.Append(Char);
+
+                    // Add token in quotes
+                    TryAddToken();
+                }
+                // Start quote
+                else {
+                    // Add previous token
+                    TryAddToken();
+
+                    InQuote = Char;
+                    Token.Append(Char);
+                }
+            }
+            else if (Char is '\n' or '\r' or ';') {
+                // Line break in quotes
+                if (InQuote is not null) {
+                    Token.Append(Char);
+                }
+                // End command
+                else {
+                    TryAddToken();
+                    TryCommitTokens();
+                }
+            }
+            else if (char.IsWhiteSpace(Char)) {
+                // Whitespace in quotes
+                if (InQuote is not null) {
+                    Token.Append(Char);
+                }
+                // End token
+                else {
+                    TryAddToken();
+                }
+            }
+            else {
+                // Unreserved character
+                Token.Append(Char);
+            }
+        }
+
+        // Trailing quote
+        if (InQuote is not null) {
+            throw new CallSyntaxException($"Unclosed quotes: `{InQuote}`");
+        }
+        // Trailing escape
+        if (Escaping) {
+            throw new CallSyntaxException("Incomplete escape sequence: `\\`");
+        }
+
+        // End final call
+        TryAddToken();
+        TryCommitTokens();
+
+        return TokensPerCall;
+    }
+    /// <summary>
+    /// Parses the tokens as calls for any of the commands.
+    /// </summary>
+    public static List<CommandCall> ParseMatchingCalls(ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands) {
+        List<CommandCall> Calls = [];
+        foreach (Command Command in Commands) {
+            if (TryParseComponents(Tokens, Command.Components, out int TokenCount, out Dictionary<string, string>? Arguments)) {
+                Calls.Add(new CommandCall(Command, Arguments, TokenCount));
+            }
+        }
+        return Calls;
+    }
+    /// <summary>
+    /// Parses the tokens as a call for any of the commands, prioritizing the call with the most tokens.
+    /// </summary>
+    public static bool TryParseCall(ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands, [NotNullWhen(true)] out CommandCall? Call) {
+        // Match all possible calls
+        List<CommandCall> Calls = ParseMatchingCalls(Tokens, Commands);
+        // Return call with most tokens
+        Call = Calls.MaxBy(Call => Call.TokenCount);
+        return Call is not null;
+    }
+    /// <summary>
+    /// Parses the tokens as the sequence of command components.
+    /// </summary>
+    public static bool TryParseComponents(ReadOnlySpan<string> Tokens, IEnumerable<CommandComponent> Components, out int TokenCount, [NotNullWhen(true)] out Dictionary<string, string>? Arguments) {
+        TokenCount = 0;
+        Arguments = [];
+
+        // Match each component
+        foreach (CommandComponent Component in Components) {
+            // Component mismatched
+            if (!TryParseComponent(Tokens[TokenCount..], Component, out int ComponentTokenCount, out Dictionary<string, string>? NewArguments)) {
+                TokenCount = 0;
+                Arguments = null;
+                return false;
+            }
+            // Component matched
+            TokenCount += ComponentTokenCount;
+            // Pass arguments
+            if (NewArguments is not null) {
+                foreach ((string Name, string Value) in NewArguments) {
+                    Arguments[Name] = Value;
+                }
+            }
+        }
+        // All components matched
+        return true;
+    }
+    /// <summary>
+    /// Parses the tokens as the command component.
+    /// </summary>
+    public static bool TryParseComponent(ReadOnlySpan<string> Tokens, CommandComponent Component, out int TokenCount, out Dictionary<string, string>? Arguments) {
+        TokenCount = 0;
+        Arguments = null;
+
+        switch (Component) {
+            // Optional
+            case CommandOptionalComponent OptionalComponent: {
+                // Match every optional component
+                if (TryParseComponents(Tokens, OptionalComponent.Components, out TokenCount, out Arguments)) {
+                    // Optional components matched
+                    return true;
+                }
+                // Not matched (OK)
+                return true;
+            }
+            // Argument
+            case CommandArgumentComponent ArgumentComponent: {
+                // Match a token as the argument
+                if (!Tokens.IsEmpty) {
+                    // Get argument value
+                    string ArgumentValue = Tokens[TokenCount];
+                    // Next token
+                    TokenCount++;
+                    // Argument matched
+                    Arguments = new() {
+                        [ArgumentComponent.Argument] = ArgumentValue
+                    };
+                    return true;
+                }
+                // Not matched
+                return false;
+            }
+            // Literal
+            case CommandLiteralComponent LiteralComponent: {
+                // Match literal
+                if (LiteralComponent.TryMatch(Tokens, out TokenCount)) {
+                    // Literal matched
+                    return true;
+                }
+                // Not matched
+                return false;
+            }
+            // Choices
+            case CommandChoicesComponent ChoicesComponent: {
+                // Match any of the choices
+                foreach (CommandComponent Choice in ChoicesComponent.Choices) {
+                    if (TryParseComponent(Tokens, Choice, out TokenCount, out Arguments)) {
+                        // Choice matched
+                        return true;
+                    }
+                }
+                // Not matched
+                return false;
+            }
+            // Not implemented
+            default: {
+                throw new NotImplementedException($"Component not implemented: '{Component.GetType().Name}'");
+            }
+        }
+    }
+}
