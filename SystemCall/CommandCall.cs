@@ -16,6 +16,9 @@ public record CommandCall(Command Command, Dictionary<string, string> Arguments,
     /// The arguments passed to the command.
     /// </summary>
     public readonly Dictionary<string, string> Arguments = Arguments;
+    /// <summary>
+    /// The number of tokens used to call the command.
+    /// </summary>
     public readonly int TokenCount = TokenCount;
 
     /// <summary>

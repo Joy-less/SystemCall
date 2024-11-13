@@ -12,18 +12,9 @@ public static class CommandParser {
     /// <exception cref="CommandSyntaxException"></exception>
     public static List<CommandComponent> ParseComponents(string Format) {
         List<CommandComponent> Components = [];
-
-        bool Optional = false;
         StringBuilder LiteralBuilder = new();
-        List<CommandComponent> OptionalBuilder = [];
+        bool Escaping = false;
 
-        void AddComponent(CommandComponent Component) {
-            if (Optional) {
-                OptionalBuilder.Add(Component);
-                return;
-            }
-            Components.Add(Component);
-        }
         void CompleteLiteral() {
             // Take literal
             string Literal = LiteralBuilder.ToString().Trim();
@@ -35,66 +26,66 @@ public static class CommandParser {
             }
 
             // Add literal
-            AddComponent(new CommandLiteralComponent(Literal));
-        }
-        void CompleteOptional() {
-            // Ensure components present
-            if (OptionalBuilder.Count == 0) {
-                return;
-            }
-
-            // Take optional components
-            List<CommandComponent> OptionalComponents = Components;
-            Components = [];
-
-            // Add optional
-            AddComponent(new CommandOptionalComponent(OptionalComponents));
+            Components.Add(new CommandLiteralComponent(Literal));
         }
 
         for (int Index = 0; Index < Format.Length; Index++) {
             char Char = Format[Index];
 
-            if (Char is '(') {
+            if (Escaping) {
+                Escaping = false;
+                // Escape sequence
+                LiteralBuilder.Append(CommandUtilities.EscapeCharacter(Char));
+            }
+            else if (Char is '\\') {
+                // Escaped backslash
+                if (Escaping) {
+                    Escaping = false;
+                    LiteralBuilder.Append(Char);
+                }
+                // Start escaping character
+                else {
+                    Escaping = true;
+                }
+            }
+            else if (Char is '(') {
                 // Complete previous literal
                 CompleteLiteral();
 
-                // Disallow recursion
-                if (Optional) {
-                    throw new CommandSyntaxException("Invalid recursion: '('");
+                // Find closing bracket
+                int EndContentsIndex = CommandUtilities.FindClosingBracket(Format, Index, '(', ')');
+                if (EndContentsIndex < 0) {
+                    throw new CommandSyntaxException("Unclosed bracket: '('");
                 }
-                // Start optional component
-                Optional = true;
+
+                // Get contents in brackets
+                string Contents = Format[(Index + 1)..EndContentsIndex];
+                // Move past contents
+                Index = EndContentsIndex;
+                // Parse contents as components
+                List<CommandComponent> ContentsComponents = ParseComponents(Contents);
+
+                // Add optional
+                Components.Add(new CommandOptionalComponent(ContentsComponents));
             }
             else if (Char is ')') {
-                // Complete previous literal
-                CompleteLiteral();
-
                 // Unexpected close bracket
-                if (!Optional) {
-                    throw new CommandSyntaxException("Unexpected bracket: ')'");
-                }
-                // Ensure components present
-                if (OptionalBuilder.Count == 0) {
-                    throw new CallSyntaxException($"Expected token in brackets: '{Format}'");
-                }
-                // End optional component
-                Optional = false;
-                CompleteOptional();
+                throw new CommandSyntaxException("Unexpected bracket: ')'");
             }
             else if (Char is '{') {
                 // Complete previous literal
                 CompleteLiteral();
 
                 // Find closing bracket
-                int EndArgumentIndex = Format.IndexOf('}', Index + 1);
-                if (EndArgumentIndex < 0) {
+                int EndContentsIndex = CommandUtilities.FindClosingBracket(Format, Index, '{', '}');
+                if (EndContentsIndex < 0) {
                     throw new CommandSyntaxException("Unclosed bracket: '{'");
                 }
 
                 // Get argument in brackets
-                string Argument = Format[(Index + 1)..EndArgumentIndex];
+                string Argument = Format[(Index + 1)..EndContentsIndex];
                 // Move past argument
-                Index = EndArgumentIndex;
+                Index = EndContentsIndex;
 
                 // Disallow recursion
                 if (Argument.Contains('{')) {
@@ -102,7 +93,7 @@ public static class CommandParser {
                 }
 
                 // Add argument
-                AddComponent(new CommandArgumentComponent(Argument));
+                Components.Add(new CommandArgumentComponent(Argument));
             }
             else if (Char is '}') {
                 // Unexpected close bracket
@@ -113,23 +104,22 @@ public static class CommandParser {
                 CompleteLiteral();
 
                 // Find closing bracket
-                int EndChoicesIndex = Format.IndexOf(']', Index + 1);
-                if (EndChoicesIndex < 0) {
+                int EndContentsIndex = CommandUtilities.FindClosingBracket(Format, Index, '[', ']');
+                if (EndContentsIndex < 0) {
                     throw new CommandSyntaxException("Unclosed bracket: '['");
                 }
 
-                // Get choices in brackets
-                string Choices = Format[(Index + 1)..EndChoicesIndex];
-                // Move past choices
-                Index = EndChoicesIndex;
+                // Get contents in brackets
+                string Contents = Format[(Index + 1)..EndContentsIndex];
+                // Move past contents
+                Index = EndContentsIndex;
                 // Split choices by commas
-                string[] ChoiceList = Choices.Split(',', StringSplitOptions.TrimEntries);
+                string[] Choices = Contents.Split(',', StringSplitOptions.TrimEntries);
                 // Parse choices as components
-                List<CommandComponent> ChoiceComponents = ChoiceList.Select(Choice => ParseComponents(Choice).SingleOrDefault()
-                    ?? throw new CommandSyntaxException($"Choice cannot contain multiple components: '{Choice}'")).ToList();
+                List<List<CommandComponent>> ChoiceComponents = Choices.Select(ParseComponents).ToList();
 
                 // Add choices
-                AddComponent(new CommandChoicesComponent(ChoiceComponents));
+                Components.Add(new CommandChoicesComponent(ChoiceComponents));
             }
             else if (Char is ']') {
                 // Unexpected close bracket
@@ -141,9 +131,13 @@ public static class CommandParser {
             }
         }
 
-        // Flush tokens
+        // Trailing escape
+        if (Escaping) {
+            throw new CallSyntaxException("Incomplete escape sequence: `\\`");
+        }
+
+        // Complete final literal
         CompleteLiteral();
-        CompleteOptional();
 
         return Components;
     }

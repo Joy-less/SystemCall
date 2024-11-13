@@ -17,7 +17,7 @@ public static class CommandCallParser {
         // Run commands in input
         StringBuilder Output = new();
         try {
-            List<CommandCall> Calls = ParseCalls(Input, Commands).ToList();
+            List<CommandCall> Calls = ParseCalls(Input, Commands);
             foreach (CommandCall Call in Calls) {
                 Output.AppendLine(await RunCommandAsync(Call) + OutputSeparator);
             }
@@ -34,7 +34,7 @@ public static class CommandCallParser {
         // Run commands in input
         StringBuilder Output = new();
         try {
-            List<CommandCall> Calls = ParseCalls(Input, Commands).ToList();
+            List<CommandCall> Calls = ParseCalls(Input, Commands);
             foreach (CommandCall Call in Calls) {
                 Output.Append(RunCommand(Call) + OutputSeparator);
             }
@@ -51,16 +51,18 @@ public static class CommandCallParser {
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
     /// <exception cref="CommandNotFoundException"/>
-    public static IEnumerable<CommandCall> ParseCalls(string Input, IEnumerable<Command> Commands) {
+    public static List<CommandCall> ParseCalls(string Input, IEnumerable<Command> Commands) {
+        List<CommandCall> Calls = [];
         // Parse each command call from input tokens
-        foreach (List<string> CommandTokens in TokenizeInput(Input)) {
+        foreach (List<string> CommandTokens in TokenizeInputCalls(Input)) {
             if (TryParseCall(CommandTokens.ToArray(), Commands, out CommandCall? Call)) {
-                yield return Call;
+                Calls.Add(Call);
             }
             else {
                 throw new CommandNotFoundException($"No matching command: `{string.Join(' ', CommandTokens)}`");
             }
         }
+        return Calls;
     }
     /// <summary>
     /// Parses the input for exactly one command call.
@@ -75,7 +77,7 @@ public static class CommandCallParser {
     /// Parses a list of tokens for each command call in the input.
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
-    public static List<List<string>> TokenizeInput(string Input) {
+    public static List<List<string>> TokenizeInputCalls(string Input) {
         List<List<string>> TokensPerCall = [];
         List<string> Tokens = [];
         StringBuilder Token = new();
@@ -99,30 +101,13 @@ public static class CommandCallParser {
             return true;
         }
 
-        foreach (char Char in Input) {
+        for (int Index = 0; Index < Input.Length; Index++) {
+            char Char = Input[Index];
+
             if (Escaping) {
                 Escaping = false;
-
-                // Newline
-                if (Char is 'n') {
-                    Token.Append('\n');
-                }
-                // Carriage return
-                else if (Char is 'r') {
-                    Token.Append('\r');
-                }
-                // Alert
-                else if (Char is 'a') {
-                    Token.Append('\a');
-                }
-                // Backspace
-                else if (Char is 'b') {
-                    Token.Append('\b');
-                }
-                // Character
-                else {
-                    Token.Append(Char);
-                }
+                // Escape sequence
+                Token.Append(CommandUtilities.EscapeCharacter(Char));
             }
             else if (Char is '\\') {
                 // Escaped backslash
@@ -168,6 +153,29 @@ public static class CommandCallParser {
                     TryCommitTokens();
                 }
             }
+            else if (Char is '(' or '[' or '{') {
+                // Add previous token
+                TryAddToken();
+
+                // Find closing bracket
+                int EndContentsIndex = CommandUtilities.FindClosingBracket(Input, Index, Char, Char switch {
+                    '(' => ')',
+                    '[' => ']',
+                    '{' => '}',
+                    _ => throw new NotImplementedException()
+                });
+                if (EndContentsIndex < 0) {
+                    throw new CommandSyntaxException("Unclosed bracket: '{'");
+                }
+
+                // Get contents in brackets
+                string Contents = Input[(Index + 1)..EndContentsIndex];
+                // Move past contents
+                Index = EndContentsIndex;
+
+                // Add HJSON as single token
+                Token.Append(Contents);
+            }
             else if (char.IsWhiteSpace(Char)) {
                 // Whitespace in quotes
                 if (InQuote is not null) {
@@ -193,11 +201,19 @@ public static class CommandCallParser {
             throw new CallSyntaxException("Incomplete escape sequence: `\\`");
         }
 
-        // End final call
+        // Complete final call
         TryAddToken();
         TryCommitTokens();
 
         return TokensPerCall;
+    }
+    /// <summary>
+    /// Parses a list of tokens for exactly one command call in the input.
+    /// </summary>
+    /// <exception cref="CallSyntaxException"/>
+    public static List<string> TokenizeInputCall(string Input) {
+        return TokenizeInputCalls(Input).SingleOrDefault()
+            ?? throw new CallSyntaxException($"Expected single command: `{Input}`");
     }
     /// <summary>
     /// Parses the tokens as calls for any of the commands.
@@ -206,6 +222,11 @@ public static class CommandCallParser {
         List<CommandCall> Calls = [];
         foreach (Command Command in Commands) {
             if (TryParseComponents(Tokens, Command.Components, out int TokenCount, out Dictionary<string, string>? Arguments)) {
+                // Ensure all tokens used up
+                if (TokenCount < Tokens.Length) {
+                    continue;
+                }
+                // Call matches command
                 Calls.Add(new CommandCall(Command, Arguments, TokenCount));
             }
         }
@@ -276,7 +297,7 @@ public static class CommandCallParser {
                     TokenCount++;
                     // Argument matched
                     Arguments = new() {
-                        [ArgumentComponent.Argument] = ArgumentValue
+                        [ArgumentComponent.ArgumentName] = ArgumentValue
                     };
                     return true;
                 }
@@ -296,8 +317,8 @@ public static class CommandCallParser {
             // Choices
             case CommandChoicesComponent ChoicesComponent: {
                 // Match any of the choices
-                foreach (CommandComponent Choice in ChoicesComponent.Choices) {
-                    if (TryParseComponent(Tokens, Choice, out TokenCount, out Arguments)) {
+                foreach (List<CommandComponent> Choice in ChoicesComponent.Choices) {
+                    if (TryParseComponents(Tokens, Choice, out TokenCount, out Arguments)) {
                         // Choice matched
                         return true;
                     }
