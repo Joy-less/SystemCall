@@ -1,4 +1,6 @@
 # System Call
+
+[![NuGet](https://img.shields.io/nuget/v/SystemCall.svg)](https://www.nuget.org/packages/SystemCall)
  
 System Call is a command-parsing .NET library inspired by [Jinx](https://github.com/JamesBoer/Jinx) and named after [Sword Art Online](https://swordartonline.fandom.com/wiki/Sacred_Arts).
 
