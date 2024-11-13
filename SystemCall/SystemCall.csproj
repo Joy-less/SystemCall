@@ -9,7 +9,22 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>Joyless</Authors>
+    <Title>System Call</Title>
+    <Description>A command-parsing library inspired by Jinx.</Description>
+    <Copyright>Joyless</Copyright>
+    <PackageProjectUrl>https://github.com/Joy-less/SystemCall</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Joy-less/SystemCall</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>command;command line interface;CLI;Jinx;language</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Hjson" Version="3.0.0" />
   </ItemGroup>
