@@ -82,7 +82,6 @@ public static class CommandCallParser {
         List<string> Tokens = [];
         StringBuilder Token = new();
         char? InQuote = null;
-        bool Escaping = false;
 
         bool TryCommitTokens() {
             if (Tokens.Count == 0) {
@@ -104,21 +103,17 @@ public static class CommandCallParser {
         for (int Index = 0; Index < Input.Length; Index++) {
             char Char = Input[Index];
 
-            if (Escaping) {
-                Escaping = false;
-                // Escape sequence
-                Token.Append("\\" + Char);
-            }
-            else if (Char is '\\') {
-                // Escaped backslash
-                if (Escaping) {
-                    Escaping = false;
-                    Token.Append(Char);
+            if (Char is '\\') {
+                // Trailing escape
+                if (Index + 1 >= Input.Length) {
+                    throw new CallSyntaxException("Incomplete escape sequence: `\\`");
                 }
-                // Start escaping character
-                else {
-                    Escaping = true;
-                }
+
+                // Move to escaped character
+                Index++;
+                char EscapedChar = Input[Index];
+                // Add escaped character
+                Token.Append("\\" + EscapedChar);
             }
             else if (Char is '"' or '\'') {
                 // Quote inside different quotes
@@ -165,7 +160,7 @@ public static class CommandCallParser {
                     _ => throw new NotImplementedException()
                 });
                 if (EndContentsIndex < 0) {
-                    throw new CommandSyntaxException("Unclosed bracket: '{'");
+                    throw new CommandSyntaxException($"Unclosed bracket: '{Char}'");
                 }
 
                 // Get contents in brackets
@@ -195,10 +190,6 @@ public static class CommandCallParser {
         // Trailing quote
         if (InQuote is not null) {
             throw new CallSyntaxException($"Unclosed quotes: `{InQuote}`");
-        }
-        // Trailing escape
-        if (Escaping) {
-            throw new CallSyntaxException("Incomplete escape sequence: `\\`");
         }
 
         // Complete final call

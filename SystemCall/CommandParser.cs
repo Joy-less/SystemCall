@@ -13,7 +13,6 @@ public static class CommandParser {
     public static List<CommandComponent> ParseComponents(string Format) {
         List<CommandComponent> Components = [];
         StringBuilder LiteralBuilder = new();
-        bool Escaping = false;
 
         void CompleteLiteral() {
             // Take literal
@@ -32,21 +31,17 @@ public static class CommandParser {
         for (int Index = 0; Index < Format.Length; Index++) {
             char Char = Format[Index];
 
-            if (Escaping) {
-                Escaping = false;
-                // Escape sequence
-                LiteralBuilder.Append(CommandUtilities.EscapeCharacter(Char));
-            }
-            else if (Char is '\\') {
-                // Escaped backslash
-                if (Escaping) {
-                    Escaping = false;
-                    LiteralBuilder.Append(Char);
+            if (Char is '\\') {
+                // Trailing escape
+                if (Index + 1 >= Format.Length) {
+                    throw new CallSyntaxException("Incomplete escape sequence: `\\`");
                 }
-                // Start escaping character
-                else {
-                    Escaping = true;
-                }
+
+                // Move to escaped character
+                Index++;
+                char EscapedChar = Format[Index];
+                // Add escaped character
+                LiteralBuilder.Append("\\" + EscapedChar);
             }
             else if (Char is '(') {
                 // Complete previous literal
@@ -129,11 +124,6 @@ public static class CommandParser {
                 // Unreserved character
                 LiteralBuilder.Append(Char);
             }
-        }
-
-        // Trailing escape
-        if (Escaping) {
-            throw new CallSyntaxException("Incomplete escape sequence: `\\`");
         }
 
         // Complete final literal

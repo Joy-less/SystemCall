@@ -3,25 +3,7 @@
 /// <summary>
 /// Utility functions for the System Call library.
 /// </summary>
-public static class CommandUtilities {
-    /// <summary>
-    /// Parses the character as an escape sequence (e.g. 'n' returns '\n').
-    /// </summary>
-    /// <remarks>Only supports single-character escape sequences.</remarks>
-    public static char EscapeCharacter(char Char) {
-        return Char switch {
-            '0' => '\0', // Null
-            'a' => '\a', // Alert
-            'b' => '\b', // Backspace
-            'e' => '\e', // Escape
-            'f' => '\f', // Form feed
-            'n' => '\n', // Newline
-            'r' => '\r', // Carriage return
-            't' => '\t', // Horizontal tab
-            'v' => '\v', // Vertical tab
-            _ => Char, // Unrecognized
-        };
-    }
+internal static class CommandUtilities {
     /// <summary>
     /// Returns the index of the bracket that closes the opening bracket.
     /// <br/>
