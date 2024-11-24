@@ -1,8 +1,7 @@
 ﻿namespace SystemCall.Tests;
 
-[TestClass]
 public class ReadMeTest {
-    [TestMethod]
+    [Fact]
     public void Test1() {
         // Define commands
         Command[] Commands = [
@@ -20,9 +19,9 @@ public class ReadMeTest {
         }
 
         // Call commands
-        Assert.AreEqual("Weapon enhanced: Sword", CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand));
+        Assert.Equal("Weapon enhanced: Sword", CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand));
     }
-    [TestMethod]
+    [Fact]
     public void Test2() {
         // Define commands
         Command[] Commands = [
@@ -46,6 +45,6 @@ public class ReadMeTest {
         }
 
         // Call commands
-        Assert.AreEqual("Weapon enhanced: Sword", CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand));
+        Assert.Equal("Weapon enhanced: Sword", CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand));
     }
 }

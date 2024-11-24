@@ -1,6 +1,5 @@
-﻿namespace SystemCall.Tests;
+﻿﻿namespace SystemCall.Tests;
 
-[TestClass]
 public class SyntaxTest {
     private readonly Command[] Commands = [
         new("kill_user", "kill {user} for {reason}"),
@@ -9,30 +8,30 @@ public class SyntaxTest {
         new("test", "test [a, an] [b, c] {lol}"),
     ];
 
-    [TestMethod]
+    [Fact]
     public void ParseCommandsTest() {
-        Assert.IsNotNull(CommandCallParser.ParseCall("kill 'player' for 'no reason'", Commands));
-        Assert.AreEqual(2, CommandCallParser.ParseCalls("kill 'player' for 'no reason';blow up", Commands).Count);
+        Assert.NotNull(CommandCallParser.ParseCall("kill 'player' for 'no reason'", Commands));
+        Assert.Equal(2, CommandCallParser.ParseCalls("kill 'player' for 'no reason';blow up", Commands).Count);
     }
-    [TestMethod]
+    [Fact]
     public void InterpretTest() {
-        Assert.AreEqual("Killed", CommandCallParser.Interpret("kill 'player' for 'no reason'", Commands, RunCommand));
-        Assert.AreEqual("Exploded\nExploded\nExploded", CommandCallParser.Interpret("explode\n    explode   ;explode", Commands, RunCommand));
-        Assert.AreEqual("Showing smile for 3.2s in Red", CommandCallParser.Interpret("show emoticon 'smile' for 3.2 seconds in colour 'Red'", Commands, RunCommand));
-        Assert.AreEqual("Showing smile for 0s in Red", CommandCallParser.Interpret("show emoticon 'smile' in colour 'Red'", Commands, RunCommand));
+        Assert.Equal("Killed", CommandCallParser.Interpret("kill 'player' for 'no reason'", Commands, RunCommand));
+        Assert.Equal("Exploded\nExploded\nExploded", CommandCallParser.Interpret("explode\n    explode   ;explode", Commands, RunCommand));
+        Assert.Equal("Showing smile for 3.2s in Red", CommandCallParser.Interpret("show emoticon 'smile' for 3.2 seconds in colour 'Red'", Commands, RunCommand));
+        Assert.Equal("Showing smile for 0s in Red", CommandCallParser.Interpret("show emoticon 'smile' in colour 'Red'", Commands, RunCommand));
     }
-    [TestMethod]
+    [Fact]
     public void HjsonTest() {
-        Assert.AreEqual("Killed", CommandCallParser.Interpret("kill \"player\" for \"no reason\"", Commands, RunCommand));
-        Assert.AreEqual("Killed", CommandCallParser.Interpret("kill 0 for {reason: 'none \\{\\}'}", Commands, RunCommand));
+        Assert.Equal("Killed", CommandCallParser.Interpret("kill \"player\" for \"no reason\"", Commands, RunCommand));
+        Assert.Equal("Killed", CommandCallParser.Interpret("kill 0 for {reason: 'none \\{\\}'}", Commands, RunCommand));
     }
-    [TestMethod]
+    [Fact]
     public void WhitespaceTest() {
-        Assert.AreEqual("Killed", CommandCallParser.Interpret("kill   \t  'player'for'no reason'", Commands, RunCommand));
+        Assert.Equal("Killed", CommandCallParser.Interpret("kill   \t  'player'for'no reason'", Commands, RunCommand));
     }
-    [TestMethod]
+    [Fact]
     public void ExcessTest() {
-        Assert.ThrowsException<CommandNotFoundException>(() => CommandCallParser.ParseCalls("kill 'player' for 'no reason' okay", Commands));
+        Assert.Throws<CommandNotFoundException>(() => CommandCallParser.ParseCalls("kill 'player' for 'no reason' okay", Commands));
     }
 
     private string? RunCommand(CommandCall Call) {
