@@ -10,26 +10,16 @@ public static class CommandUtilities {
     /// <remarks>Only supports single-character escape sequences.</remarks>
     public static char EscapeCharacter(char Char) {
         return Char switch {
-            // Null
-            '0' => '\0',
-            // Alert
-            'a' => '\a',
-            // Backspace
-            'b' => '\b',
-            // Escape
-            'e' => '\e',
-            // Form feed
-            'f' => '\f',
-            // Newline
-            'n' => '\n',
-            // Carriage return
-            'r' => '\r',
-            // Horizontal tab
-            't' => '\t',
-            // Vertical tab
-            'v' => '\v',
-            // Unrecognized
-            _ => Char,
+            '0' => '\0', // Null
+            'a' => '\a', // Alert
+            'b' => '\b', // Backspace
+            'e' => '\e', // Escape
+            'f' => '\f', // Form feed
+            'n' => '\n', // Newline
+            'r' => '\r', // Carriage return
+            't' => '\t', // Horizontal tab
+            'v' => '\v', // Vertical tab
+            _ => Char, // Unrecognized
         };
     }
     /// <summary>

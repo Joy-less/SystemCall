@@ -107,7 +107,7 @@ public static class CommandCallParser {
             if (Escaping) {
                 Escaping = false;
                 // Escape sequence
-                Token.Append(CommandUtilities.EscapeCharacter(Char));
+                Token.Append("\\" + Char);
             }
             else if (Char is '\\') {
                 // Escaped backslash
