@@ -1,4 +1,4 @@
-﻿namespace SystemCall;
+namespace SystemCall;
 
 /// <summary>
 /// An exception thrown by System Call.

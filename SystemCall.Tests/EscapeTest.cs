@@ -1,4 +1,4 @@
-﻿namespace SystemCall.Tests;
+namespace SystemCall.Tests;
 
 public class EscapeTest {
     private static readonly Command[] Commands = [

@@ -1,4 +1,4 @@
-﻿namespace SystemCall;
+namespace SystemCall;
 
 /// <summary>
 /// A grammar component for calling a command.

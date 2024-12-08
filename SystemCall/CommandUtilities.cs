@@ -1,4 +1,4 @@
-﻿namespace SystemCall;
+namespace SystemCall;
 
 /// <summary>
 /// Utility functions for the System Call library.

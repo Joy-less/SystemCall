@@ -1,4 +1,4 @@
-﻿namespace SystemCall;
+namespace SystemCall;
 
 /// <summary>
 /// A command definition that may be called.
