@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace SystemCall;
@@ -55,7 +56,7 @@ public static class CommandCallParser {
         List<CommandCall> Calls = [];
         // Parse each command call from input tokens
         foreach (List<string> CommandTokens in TokenizeInputCalls(Input)) {
-            if (TryParseCall(CommandTokens.ToArray(), Commands, out CommandCall? Call)) {
+            if (TryParseCall(CollectionsMarshal.AsSpan(CommandTokens), Commands, out CommandCall? Call)) {
                 Calls.Add(Call);
             }
             else {
