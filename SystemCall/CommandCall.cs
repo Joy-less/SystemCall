@@ -24,14 +24,20 @@ public record CommandCall(Command Command, Dictionary<string, string> Arguments,
     /// Deserializes the passed HJSON argument.
     /// </summary>
     public bool TryGetArgument(string Name, out JsonElement Argument) {
-        return HjsonReader.ParseElement(Arguments[Name]).TryGetValue(out Argument);
+        if (Arguments.TryGetValue(Name, out string? ArgumentHjson)) {
+            return HjsonReader.ParseElement(ArgumentHjson).TryGetValue(out Argument);
+        }
+        else {
+            Argument = default;
+            return false;
+        }
     }
     /// <summary>
     /// Deserializes the passed HJSON argument as the given type.
     /// </summary>
     public bool TryGetArgument<T>(string Name, out T? Argument) {
         if (TryGetArgument(Name, out JsonElement ArgumentElement)) {
-            Argument = ArgumentElement.Deserialize<T>();
+            Argument = ArgumentElement.Deserialize<T>(JsonOptions.Mini);
             return true;
         }
         else {
