@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <VersionPrefix>1.2</VersionPrefix>
-    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -15,7 +15,7 @@
     <PackageProjectUrl>https://github.com/Joy-less/SystemCall</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Joy-less/SystemCall</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageTags>command;command line interface;CLI;Jinx;language</PackageTags>
+    <PackageTags>command; command line interface; CLI; Jinx; language; parser</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
@@ -26,6 +26,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Hjson" Version="3.0.0" />
+    <PackageReference Include="HjsonSharp" Version="1.0.0"/>
   </ItemGroup>
 </Project>

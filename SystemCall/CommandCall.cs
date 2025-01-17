@@ -1,6 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
-using Hjson;
+using HjsonSharp;
 
 namespace SystemCall;
 
@@ -22,64 +21,53 @@ public record CommandCall(Command Command, Dictionary<string, string> Arguments,
     public readonly int TokenCount = TokenCount;
 
     /// <summary>
-    /// Deserializes the passed Hjson argument.
+    /// Deserializes the passed HJSON argument.
     /// </summary>
-    public bool TryGetArgument(string Name, [NotNullWhen(true)] out JsonValue? Argument) {
-        try {
-            // Convert Hjson to object
-            Argument = HjsonValue.Parse(Arguments[Name]);
+    public bool TryGetArgument(string Name, out JsonElement Argument) {
+        return HjsonReader.ParseElement(Arguments[Name]).TryGetValue(out Argument);
+    }
+    /// <summary>
+    /// Deserializes the passed HJSON argument as the given type.
+    /// </summary>
+    public bool TryGetArgument<T>(string Name, out T? Argument) {
+        if (TryGetArgument(Name, out JsonElement ArgumentElement)) {
+            Argument = ArgumentElement.Deserialize<T>();
             return true;
         }
-        catch (Exception) {
+        else {
             Argument = default;
             return false;
         }
     }
     /// <summary>
-    /// Deserializes the passed Hjson argument as the given type.
+    /// Deserializes the passed HJSON argument.
     /// </summary>
-    public bool TryGetArgument<T>(string Name, [NotNullWhen(true)] out T? Argument) {
-        try {
-            // Convert Hjson to JSON
-            string ArgumentJson = HjsonValue.Parse(Arguments[Name]).ToString();
-            // Convert JSON to object
-            Argument = JsonSerializer.Deserialize<T>(ArgumentJson)!;
-            return true;
-        }
-        catch (Exception) {
-            Argument = default;
-            return false;
-        }
-    }
-    /// <summary>
-    /// Deserializes the passed Hjson argument.
-    /// </summary>
-    public JsonValue GetArgument(string Name) {
-        if (TryGetArgument(Name, out JsonValue? Argument)) {
+    public JsonElement GetArgument(string Name) {
+        if (TryGetArgument(Name, out JsonElement Argument)) {
             return Argument;
         }
         throw new CallArgumentException($"Invalid argument: '{Name}'");
     }
     /// <summary>
-    /// Deserializes the passed Hjson argument as the given type.
+    /// Deserializes the passed HJSON argument as the given type.
     /// </summary>
-    public T GetArgument<T>(string Name) {
+    public T? GetArgument<T>(string Name) {
         if (TryGetArgument(Name, out T? Argument)) {
             return Argument;
         }
         throw new CallArgumentException($"Invalid argument: '{Name}' ({typeof(T).Name})");
     }
     /// <summary>
-    /// Deserializes the passed Hjson argument or returns the default.
+    /// Deserializes the passed HJSON argument or returns the default.
     /// </summary>
-    public JsonValue? GetArgument(string Name, JsonValue? Default = default) {
-        if (TryGetArgument(Name, out JsonValue? Argument)) {
+    public JsonElement GetArgument(string Name, JsonElement Default = default) {
+        if (TryGetArgument(Name, out JsonElement Argument)) {
             return Argument;
         }
         return Default;
     }
     /// <summary>
-    /// Deserializes the passed Hjson argument as the given type or returns the default.
+    /// Deserializes the passed HJSON argument as the given type or returns the default.
     /// </summary>
     public T? GetArgumentOrDefault<T>(string Name, T? Default = default) {
         if (TryGetArgument(Name, out T? Argument)) {

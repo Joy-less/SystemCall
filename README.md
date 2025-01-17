@@ -27,7 +27,7 @@ string? RunCommand(CommandCall Call) {
 CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand);
 ```
 
-Arguments are parsed as [Hjson](https://github.com/hjson/hjson-cs), which is a flexible superset of JSON.
+Arguments are parsed as [HJSON](https://github.com/Joy-less/HjsonSharp), which is a flexible superset of JSON.
 
 ## Defining Commands
 
