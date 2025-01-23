@@ -1,6 +1,6 @@
+using System.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace SystemCall;
 
@@ -19,16 +19,23 @@ public static class CommandCallParser {
         StringBuilder Output = new();
         try {
             List<CommandCall> Calls = ParseCalls(Input, Commands);
+
+            bool IsFirst = true;
             foreach (CommandCall Call in Calls) {
-                Output.AppendLine(await RunCommandAsync(Call) + OutputSeparator);
+                if (!IsFirst) {
+                    Output.Append(OutputSeparator);
+                }
+                IsFirst = false;
+
+                Output.Append(await RunCommandAsync(Call));
             }
         }
         // Command errored
         catch (SystemCallException Exception) {
-            Output.AppendLine(Exception.Message + OutputSeparator);
+            Output.Append(Exception.Message);
         }
         // Return success
-        return Output.ToString().Trim();
+        return Output.ToString();
     }
     /// <inheritdoc cref="InterpretAsync(string, IEnumerable{Command}, Func{CommandCall, Task{string?}}, string)"/>
     public static string Interpret(string Input, IEnumerable<Command> Commands, Func<CommandCall, string?> RunCommand, string OutputSeparator = "\n") {
@@ -36,16 +43,23 @@ public static class CommandCallParser {
         StringBuilder Output = new();
         try {
             List<CommandCall> Calls = ParseCalls(Input, Commands);
+
+            bool IsFirst = true;
             foreach (CommandCall Call in Calls) {
-                Output.Append(RunCommand(Call) + OutputSeparator);
+                if (!IsFirst) {
+                    Output.Append(OutputSeparator);
+                }
+                IsFirst = false;
+
+                Output.Append(RunCommand(Call));
             }
         }
         // Command errored
         catch (SystemCallException Exception) {
-            Output.Append(Exception.Message + OutputSeparator);
+            Output.Append(Exception.Message);
         }
         // Return success
-        return Output.ToString().Trim();
+        return Output.ToString();
     }
     /// <summary>
     /// Parses the input for a sequence of command calls.
