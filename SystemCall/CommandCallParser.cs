@@ -147,7 +147,7 @@ public static class CommandCallParser {
                     Token.Append(Char);
                 }
             }
-            else if (Char is '\n' or '\r' or ';') {
+            else if (Char is '\n' or '\r' or '\u2028' or '\u2029' or ';') {
                 // Line break in quotes
                 if (InQuote is not null) {
                     Token.Append(Char);
