@@ -110,11 +110,20 @@ public static class CommandCallParser {
                     throw new CallSyntaxException("Incomplete escape sequence: `\\`");
                 }
 
-                // Move to escaped character
+                // Append escape
+                Token.Append(Char);
+
+                // Append escaped character
                 Index++;
                 char EscapedChar = Input[Index];
-                // Add escaped character
-                Token.Append("\\" + EscapedChar);
+                Token.Append(EscapedChar);
+
+                // Append surrogate pair
+                if (char.IsHighSurrogate(EscapedChar)) {
+                    Index++;
+                    char EscapedCharLow = Input[Index];
+                    Token.Append(EscapedCharLow);
+                }
             }
             else if (Char is '"' or '\'') {
                 // Quote inside different quotes

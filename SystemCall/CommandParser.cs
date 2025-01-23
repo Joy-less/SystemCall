@@ -37,11 +37,20 @@ public static class CommandParser {
                     throw new CallSyntaxException("Incomplete escape sequence: `\\`");
                 }
 
-                // Move to escaped character
+                // Append escape
+                LiteralBuilder.Append(Char);
+
+                // Append escaped character
                 Index++;
                 char EscapedChar = Format[Index];
-                // Add escaped character
-                LiteralBuilder.Append("\\" + EscapedChar);
+                LiteralBuilder.Append(EscapedChar);
+
+                // Append surrogate pair
+                if (char.IsHighSurrogate(EscapedChar)) {
+                    Index++;
+                    char EscapedCharLow = Format[Index];
+                    LiteralBuilder.Append(EscapedCharLow);
+                }
             }
             else if (Char is '(') {
                 // Complete previous literal
