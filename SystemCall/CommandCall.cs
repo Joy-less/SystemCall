@@ -10,15 +10,15 @@ public record CommandCall(Command Command, Dictionary<string, string> Arguments,
     /// <summary>
     /// The command that has been called.
     /// </summary>
-    public readonly Command Command = Command;
+    public Command Command { get; set; } = Command;
     /// <summary>
     /// The arguments passed to the command.
     /// </summary>
-    public readonly Dictionary<string, string> Arguments = Arguments;
+    public Dictionary<string, string> Arguments { get; set; } = Arguments;
     /// <summary>
     /// The number of tokens used to call the command.
     /// </summary>
-    public readonly int TokenCount = TokenCount;
+    public int TokenCount { get; set; } = TokenCount;
 
     /// <summary>
     /// Deserializes the passed HJSON argument.

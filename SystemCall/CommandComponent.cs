@@ -11,7 +11,7 @@ public record CommandOptionalComponent(List<CommandComponent> Components) : Comm
     /// <summary>
     /// The components that may be entirely omitted.
     /// </summary>
-    public readonly List<CommandComponent> Components = Components;
+    public List<CommandComponent> Components { get; set; } = Components;
 }
 /// <summary>
 /// A component that is passed as an argument.
@@ -20,7 +20,7 @@ public record CommandArgumentComponent(string ArgumentName) : CommandComponent {
     /// <summary>
     /// The name of the argument.
     /// </summary>
-    public readonly string ArgumentName = ArgumentName;
+    public string ArgumentName { get; set; } = ArgumentName;
 }
 /// <summary>
 /// A component that must be included verbatim.
@@ -29,16 +29,17 @@ public record CommandLiteralComponent(List<string> LiteralTokens, bool CaseSensi
     /// <summary>
     /// The tokens to match.
     /// </summary>
-    public readonly List<string> LiteralTokens = LiteralTokens;
+    public List<string> LiteralTokens { get; set; } = LiteralTokens;
     /// <summary>
     /// Whether the literal must be included in the same letter case.
     /// </summary>
-    public readonly bool CaseSensitive = CaseSensitive;
+    public bool CaseSensitive { get; set; } = CaseSensitive;
 
     /// <summary>
     /// Constructs a <see cref="CommandLiteralComponent"/> by tokenizing the literal.
     /// </summary>
-    public CommandLiteralComponent(string Literal, bool CaseSensitive = false) : this(CommandCallParser.TokenizeInputCall(Literal), CaseSensitive) {
+    public CommandLiteralComponent(string Literal, bool CaseSensitive = false)
+        : this(CommandCallParser.TokenizeInputCall(Literal), CaseSensitive) {
     }
     /// <summary>
     /// Converts <see cref="CaseSensitive"/> to a <see cref="StringComparison"/> used to compare literals.
@@ -72,5 +73,5 @@ public record CommandChoicesComponent(List<List<CommandComponent>> Choices) : Co
     /// <summary>
     /// The component sequences that may be chosen.
     /// </summary>
-    public readonly List<List<CommandComponent>> Choices = Choices;
+    public List<List<CommandComponent>> Choices { get; set; } = Choices;
 }
