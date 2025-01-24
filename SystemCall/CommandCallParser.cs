@@ -1,6 +1,9 @@
 using System.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using HjsonSharp;
+using System.Text.Json;
+using ResultZero;
 
 namespace SystemCall;
 
@@ -96,9 +99,8 @@ public static class CommandCallParser {
         List<List<string>> TokensPerCall = [];
         List<string> Tokens = [];
         StringBuilder Token = new();
-        char? InQuote = null;
 
-        bool TryCommitTokens() {
+        bool TrySubmitCall() {
             if (Tokens.Count == 0) {
                 return false;
             }
@@ -106,7 +108,7 @@ public static class CommandCallParser {
             Tokens = [];
             return true;
         }
-        bool TryAddToken() {
+        bool TrySubmitToken() {
             if (Token.Length == 0) {
                 return false;
             }
@@ -115,110 +117,71 @@ public static class CommandCallParser {
             return true;
         }
 
-        for (int Index = 0; Index < Input.Length; Index++) {
-            char Char = Input[Index];
+        int Index = 0;
+        while (Index < Input.Length) {
+            // Read rune
+            Rune Rune = Rune.GetRuneAt(Input, Index);
+            Index += Rune.Utf16SequenceLength;
 
-            if (Char is '\\') {
-                // Trailing escape
-                if (Index + 1 >= Input.Length) {
+            // Escape character
+            if (Rune.Value is '\\') {
+                // Append escape
+                Token.Append(Rune);
+
+                // Ensure not trailing escape
+                if (Index >= Input.Length) {
                     throw new CallSyntaxException("Incomplete escape sequence: `\\`");
                 }
 
-                // Append escape
-                Token.Append(Char);
+                // Read escaped rune
+                Rune EscapedRune = Rune.GetRuneAt(Input, Index);
+                Index += EscapedRune.Utf16SequenceLength;
 
-                // Append escaped character
-                Index++;
-                char EscapedChar = Input[Index];
-                Token.Append(EscapedChar);
-
-                // Append surrogate pair
-                if (char.IsHighSurrogate(EscapedChar)) {
-                    Index++;
-                    char EscapedCharLow = Input[Index];
-                    Token.Append(EscapedCharLow);
-                }
+                // Append escaped rune
+                Token.Append(EscapedRune);
             }
-            else if (Char is '"' or '\'') {
-                // Quote inside different quotes
-                if (InQuote is not null && InQuote != Char) {
-                    Token.Append(Char);
-                }
-                // End quote
-                else if (InQuote == Char) {
-                    InQuote = null;
-                    Token.Append(Char);
+            // JSON5 character
+            else if (Rune.Value is '"' or '\'' or '{' or '}' or '[' or ']' or ':' or '/' or '#') {
+                // End previous token
+                TrySubmitToken();
 
-                    // Add token in quotes
-                    TryAddToken();
-                }
-                // Start quote
-                else {
-                    // Add previous token
-                    TryAddToken();
+                // Move to start of element
+                Index -= Rune.Utf16SequenceLength;
 
-                    InQuote = Char;
-                    Token.Append(Char);
+                // Read JSON5 element
+                int ElementLength;
+                using (HjsonReader Reader = new(Input, Index, Input.Length - Index, HjsonReaderOptions.Json5)) {
+                    ElementLength = (int)Reader.ReadElementLength(IsRoot: false).Value;
                 }
+                ReadOnlySpan<char> RawElement = Input.AsSpan(Index, ElementLength);
+
+                // Move to end of element
+                Index += ElementLength;
+
+                // Submit element as token
+                Token.Append(RawElement);
+                TrySubmitToken();
             }
-            else if (Char is '\n' or '\r' or '\u2028' or '\u2029' or ';') {
-                // Line break in quotes
-                if (InQuote is not null) {
-                    Token.Append(Char);
-                }
-                // End command
-                else {
-                    TryAddToken();
-                    TryCommitTokens();
-                }
+            // End of call
+            else if (Rune.Value is '\n' or '\r' or '\u2028' or '\u2029' or ';') {
+                // End call
+                TrySubmitToken();
+                TrySubmitCall();
             }
-            else if (Char is '(' or '[' or '{') {
-                // Add previous token
-                TryAddToken();
-
-                // Find closing bracket
-                int EndContentsIndex = CommandUtilities.FindClosingBracket(Input, Index, Char, Char switch {
-                    '(' => ')',
-                    '[' => ']',
-                    '{' => '}',
-                    _ => throw new NotImplementedException()
-                });
-                if (EndContentsIndex < 0) {
-                    throw new CommandSyntaxException($"Unclosed bracket: '{Char}'");
-                }
-
-                // Get contents in brackets
-                string Contents = Input[(Index + 1)..EndContentsIndex];
-                // Move past contents
-                Index = EndContentsIndex;
-
-                // Add HJSON as single token
-                Token.Append(Contents);
-            }
-            else if (char.IsWhiteSpace(Char)) {
-                // Whitespace in quotes
-                if (InQuote is not null) {
-                    Token.Append(Char);
-                }
+            // Whitespace
+            else if (Rune.IsWhiteSpace(Rune)) {
                 // End token
-                else {
-                    TryAddToken();
-                }
+                TrySubmitToken();
             }
+            // Unreserved character
             else {
-                // Unreserved character
-                Token.Append(Char);
+                Token.Append(Rune);
             }
-        }
-
-        // Trailing quote
-        if (InQuote is not null) {
-            throw new CallSyntaxException($"Unclosed quotes: `{InQuote}`");
         }
 
         // Complete final call
-        TryAddToken();
-        TryCommitTokens();
+        TrySubmitToken();
+        TrySubmitCall();
 
         return TokensPerCall;
     }
