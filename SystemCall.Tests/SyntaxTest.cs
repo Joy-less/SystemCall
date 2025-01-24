@@ -21,7 +21,7 @@ public class SyntaxTest {
         Assert.Equal("Showing smile for 0s in Red", CommandCallParser.Interpret("show emoticon 'smile' in colour 'Red'", Commands, RunCommand));
     }
     [Fact]
-    public void HjsonTest() {
+    public void Json5Test() {
         Assert.Equal("Killed", CommandCallParser.Interpret("kill \"player\" for \"no reason\"", Commands, RunCommand));
         Assert.Equal("Killed", CommandCallParser.Interpret("kill 0 for {reason: 'none \\{\\}'}", Commands, RunCommand));
     }
@@ -38,7 +38,7 @@ public class SyntaxTest {
         return Call.Command.Name switch {
             "kill_user" => "Killed",
             "explode" => "Exploded",
-            "show_emoticon" => $"Showing {Call.GetArgument<string>("name")} for {Call.GetArgumentOrDefault<double>("duration")}s in {Enum.Parse<ConsoleColor>(Call.GetArgument<string>("color"))}",
+            "show_emoticon" => $"Showing {Call.GetArgument<string>("name")} for {Call.GetArgumentOrDefault<double>("duration")}s in {Enum.Parse<ConsoleColor>(Call.GetArgument<string>("color")!)}",
             _ => null,
         };
     }

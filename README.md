@@ -27,7 +27,7 @@ string? RunCommand(CommandCall Call) {
 CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand);
 ```
 
-Arguments are parsed as [HJSON](https://github.com/Joy-less/HjsonSharp), which is a flexible superset of JSON.
+Arguments are parsed as [JSON5](https://github.com/Joy-less/HjsonSharp), which is a superset of JSON.
 
 ## Defining Commands
 
@@ -77,3 +77,7 @@ string? RunCommand(CommandCall Call) {
 
 string Output = CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand);
 ```
+
+## Note
+
+System Call will migrate from JSON5 to JSONH when it is complete. See [https://github.com/jsonh-org/Jsonh](jsonh-org/Jsonh).
