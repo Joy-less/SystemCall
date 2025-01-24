@@ -1,9 +1,10 @@
 namespace SystemCall.Tests;
 
 public class EscapeTest {
-    private static readonly Command[] Commands = [
+    private readonly Command[] Commands = [
         new("print", "print {object}"),
         new("esc", @"esc\{"),
+        new("choices", @"[a\,b, c]"),
     ];
 
     [Fact]
@@ -17,5 +18,10 @@ public class EscapeTest {
     [Fact]
     public void Test3() {
         CommandCallParser.ParseCall(@"esc\{", Commands);
+    }
+    [Fact]
+    public void Test4() {
+        CommandCallParser.ParseCall(@"a,b", Commands);
+        CommandCallParser.ParseCall(@"c", Commands);
     }
 }

@@ -17,7 +17,7 @@ internal static class CommandUtilities {
     ///  ^                  ^
     /// </code>
     /// </summary>
-    public static int FindClosingBracket(ReadOnlySpan<char> Input, Rune OpenBracketRune, Rune CloseBracketRune, Rune? EscapeRune) {
+    public static int FindClosingBracket(this ReadOnlySpan<char> Input, Rune OpenBracketRune, Rune CloseBracketRune, Rune? EscapeRune) {
         int Depth = 1;
         int Index = 0;
         while (Index < Input.Length) {
@@ -53,5 +53,62 @@ internal static class CommandUtilities {
         }
         // Closing bracket not found
         return -1;
+    }
+    /// <inheritdoc cref="FindClosingBracket(ReadOnlySpan{char}, Rune, Rune, Rune?)"/>
+    public static int FindClosingBracket(this ReadOnlySpan<char> Input, char OpenBracketChar, char CloseBracketChar, char? EscapeChar) {
+        return FindClosingBracket(Input, (Rune)OpenBracketChar, (Rune)CloseBracketChar, (Rune?)EscapeChar);
+    }
+    /// <summary>
+    /// Splits the string by the separator, ignoring escaped separators.<br/>
+    /// The escape characters are removed.
+    /// </summary>
+    public static List<string> SplitWithEscape(this ReadOnlySpan<char> Input, Rune SeparatorRune, Rune? EscapeRune) {
+        StringBuilder Segment = new();
+        List<string> Result = [];
+
+        int Index = 0;
+        while (Index < Input.Length) {
+            // Read rune
+            if (Rune.DecodeFromUtf16(Input[Index..], out Rune CurrentRune, out int CurrentCharsConsumed) is not OperationStatus.Done) {
+                throw new CallSyntaxException("Invalid UTF-16 sequence");
+            }
+            Index += CurrentCharsConsumed;
+
+            // Escape
+            if (CurrentRune == EscapeRune) {
+                // Ensure not trailing escape
+                if (Index >= Input.Length) {
+                    throw new CallSyntaxException("Incomplete escape sequence: `\\`");
+                }
+                // Read escaped rune
+                if (Rune.DecodeFromUtf16(Input[Index..], out Rune EscapedRune, out int EscapedCharsConsumed) is not OperationStatus.Done) {
+                    throw new CallSyntaxException("Invalid UTF-16 sequence");
+                }
+                Index += EscapedCharsConsumed;
+
+                // Append escaped rune
+                Segment.Append(EscapedRune);
+            }
+            // Separator
+            else if (CurrentRune == SeparatorRune) {
+                Result.Add(Segment.ToString());
+                Segment.Clear();
+            }
+            // Other
+            else {
+                Segment.Append(CurrentRune);
+            }
+        }
+
+        // Add last segment
+        if (Segment.Length != 0) {
+            Result.Add(Segment.ToString());
+        }
+
+        return Result;
+    }
+    /// <inheritdoc cref="SplitWithEscape(ReadOnlySpan{char}, Rune, Rune?)"/>
+    public static List<string> SplitWithEscape(this ReadOnlySpan<char> Input, char SeparatorChar, char? EscapeChar) {
+        return SplitWithEscape(Input, (Rune)SeparatorChar, (Rune?)EscapeChar);
     }
 }

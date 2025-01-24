@@ -55,10 +55,11 @@ public static class CommandParser {
                 SubmitLiteral();
 
                 // Find closing bracket
-                int EndContentsIndex = CommandUtilities.FindClosingBracket(Format.AsSpan(Index), (Rune)'(', (Rune)')', (Rune)'\\') + Index;
-                if (EndContentsIndex < 0) {
+                int EndContentsSubIndex = Format.AsSpan(Index).FindClosingBracket('(', ')', '\\');
+                if (EndContentsSubIndex < 0) {
                     throw new CommandSyntaxException("Unclosed bracket: '('");
                 }
+                int EndContentsIndex = Index + EndContentsSubIndex;
 
                 // Get contents in brackets
                 string Contents = Format[Index..EndContentsIndex];
@@ -79,10 +80,11 @@ public static class CommandParser {
                 SubmitLiteral();
 
                 // Find closing bracket
-                int EndContentsIndex = CommandUtilities.FindClosingBracket(Format.AsSpan(Index), (Rune)'{', (Rune)'}', (Rune)'\\') + Index;
-                if (EndContentsIndex < 0) {
+                int EndContentsSubIndex = Format.AsSpan(Index).FindClosingBracket('{', '}', '\\');
+                if (EndContentsSubIndex < 0) {
                     throw new CommandSyntaxException("Unclosed bracket: '{'");
                 }
+                int EndContentsIndex = Index + EndContentsSubIndex;
 
                 // Get argument in brackets
                 string Argument = Format[Index..EndContentsIndex];
@@ -105,18 +107,19 @@ public static class CommandParser {
                 SubmitLiteral();
 
                 // Find closing bracket
-                int EndContentsIndex = CommandUtilities.FindClosingBracket(Format.AsSpan(Index), (Rune)'[', (Rune)']', (Rune)'\\') + Index;
-                if (EndContentsIndex < 0) {
+                int EndContentsSubIndex = Format.AsSpan(Index).FindClosingBracket('[', ']', '\\');
+                if (EndContentsSubIndex < 0) {
                     throw new CommandSyntaxException("Unclosed bracket: '['");
                 }
+                int EndContentsIndex = Index + EndContentsSubIndex;
 
                 // Get contents in brackets
-                string Contents = Format[Index..EndContentsIndex];
+                ReadOnlySpan<char> Contents = Format.AsSpan(Index..EndContentsIndex);
                 // Move past contents
                 Index = EndContentsIndex + 1;
 
                 // Split choices by commas
-                string[] Choices = Contents.Split(',', StringSplitOptions.TrimEntries);
+                IEnumerable<string> Choices = Contents.SplitWithEscape(',', '\\').Select(Choice => Choice.Trim());
                 // Parse choices as components
                 List<List<CommandComponent>> ChoiceComponents = Choices.Select(ParseComponents).ToList();
                 // Add choices
