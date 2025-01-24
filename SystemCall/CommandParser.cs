@@ -1,5 +1,4 @@
 using System.Text;
-using static HjsonSharp.HjsonReader;
 
 namespace SystemCall;
 
@@ -56,7 +55,7 @@ public static class CommandParser {
                 SubmitLiteral();
 
                 // Find closing bracket
-                int EndContentsIndex = CommandUtilities.FindClosingBracket(Format, Index, (Rune)'(', (Rune)')', (Rune)'\\');
+                int EndContentsIndex = CommandUtilities.FindClosingBracket(Format.AsSpan(Index), (Rune)'(', (Rune)')', (Rune)'\\') + Index;
                 if (EndContentsIndex < 0) {
                     throw new CommandSyntaxException("Unclosed bracket: '('");
                 }
@@ -80,7 +79,7 @@ public static class CommandParser {
                 SubmitLiteral();
 
                 // Find closing bracket
-                int EndContentsIndex = CommandUtilities.FindClosingBracket(Format, Index, (Rune)'{', (Rune)'}', (Rune)'\\');
+                int EndContentsIndex = CommandUtilities.FindClosingBracket(Format.AsSpan(Index), (Rune)'{', (Rune)'}', (Rune)'\\') + Index;
                 if (EndContentsIndex < 0) {
                     throw new CommandSyntaxException("Unclosed bracket: '{'");
                 }
@@ -106,7 +105,7 @@ public static class CommandParser {
                 SubmitLiteral();
 
                 // Find closing bracket
-                int EndContentsIndex = CommandUtilities.FindClosingBracket(Format, Index, (Rune)'[', (Rune)']', (Rune)'\\');
+                int EndContentsIndex = CommandUtilities.FindClosingBracket(Format.AsSpan(Index), (Rune)'[', (Rune)']', (Rune)'\\') + Index;
                 if (EndContentsIndex < 0) {
                     throw new CommandSyntaxException("Unclosed bracket: '['");
                 }

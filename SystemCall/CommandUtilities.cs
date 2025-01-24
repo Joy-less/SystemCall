@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Text;
 
 namespace SystemCall;
@@ -13,41 +14,44 @@ internal static class CommandUtilities {
     /// <br/>
     /// <code>
     /// ([a, (b + c), d] - e) + f
-    /// ^                   ^
+    ///  ^                  ^
     /// </code>
     /// </summary>
-    public static int FindClosingBracket(string String, int StartIndex, Rune OpenBracketRune, Rune CloseBracketRune, Rune? EscapeRune) {
+    public static int FindClosingBracket(ReadOnlySpan<char> Input, Rune OpenBracketRune, Rune CloseBracketRune, Rune? EscapeRune) {
         int Depth = 1;
-
-        int Index = StartIndex;
-        while (Index < String.Length) {
+        int Index = 0;
+        while (Index < Input.Length) {
             // Read rune
-            Rune Rune = Rune.GetRuneAt(String, Index);
-            Index += Rune.Utf16SequenceLength;
+            if (Rune.DecodeFromUtf16(Input[Index..], out Rune CurrentRune, out int CurrentCharsConsumed) is not OperationStatus.Done) {
+                throw new CallSyntaxException("Invalid UTF-16 sequence");
+            }
+            Index += CurrentCharsConsumed;
 
             // Open bracket
-            if (Rune == OpenBracketRune) {
+            if (CurrentRune == OpenBracketRune) {
                 Depth++;
             }
             // Close bracket
-            else if (Rune == CloseBracketRune) {
+            else if (CurrentRune == CloseBracketRune) {
                 Depth--;
                 if (Depth == 0) {
-                    return Index - Rune.Utf16SequenceLength;
+                    return Index - CurrentCharsConsumed;
                 }
             }
             // Escape
-            else if (Rune == EscapeRune) {
+            else if (CurrentRune == EscapeRune) {
                 // Ensure not trailing escape
-                if (Index >= String.Length) {
+                if (Index >= Input.Length) {
                     throw new CallSyntaxException("Incomplete escape sequence: `\\`");
                 }
                 // Read escaped rune
-                Rune EscapedRune = Rune.GetRuneAt(String, Index);
-                Index += EscapedRune.Utf16SequenceLength;
+                if (Rune.DecodeFromUtf16(Input[Index..], out Rune _, out int EscapedCharsConsumed) is not OperationStatus.Done) {
+                    throw new CallSyntaxException("Invalid UTF-16 sequence");
+                }
+                Index += EscapedCharsConsumed;
             }
         }
-
+        // Closing bracket not found
         return -1;
     }
 }
