@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace SystemCall;
 
 /// <summary>
@@ -14,21 +16,38 @@ internal static class CommandUtilities {
     /// ^                   ^
     /// </code>
     /// </summary>
-    public static int FindClosingBracket(string String, int OpenIndex, char OpenChar, char CloseChar) {
+    public static int FindClosingBracket(string String, int StartIndex, Rune OpenBracketRune, Rune CloseBracketRune, Rune? EscapeRune) {
         int Depth = 1;
-        for (int Index = OpenIndex + 1; Index < String.Length; Index++) {
-            char Char = String[Index];
 
-            if (Char == OpenChar) {
+        int Index = StartIndex;
+        while (Index < String.Length) {
+            // Read rune
+            Rune Rune = Rune.GetRuneAt(String, Index);
+            Index += Rune.Utf16SequenceLength;
+
+            // Open bracket
+            if (Rune == OpenBracketRune) {
                 Depth++;
             }
-            else if (Char == CloseChar) {
+            // Close bracket
+            else if (Rune == CloseBracketRune) {
                 Depth--;
                 if (Depth == 0) {
-                    return Index;
+                    return Index - Rune.Utf16SequenceLength;
                 }
             }
+            // Escape
+            else if (Rune == EscapeRune) {
+                // Ensure not trailing escape
+                if (Index >= String.Length) {
+                    throw new CallSyntaxException("Incomplete escape sequence: `\\`");
+                }
+                // Read escaped rune
+                Rune EscapedRune = Rune.GetRuneAt(String, Index);
+                Index += EscapedRune.Utf16SequenceLength;
+            }
         }
+
         return -1;
     }
 }
