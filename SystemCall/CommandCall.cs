@@ -25,7 +25,7 @@ public record CommandCall(Command Command, Dictionary<string, string> Arguments,
     /// </summary>
     public bool TryGetArgument(string Name, out JsonElement Argument) {
         if (Arguments.TryGetValue(Name, out string? ArgumentJson5)) {
-            return HjsonReader.ParseElement(ArgumentJson5, HjsonReaderOptions.Json5).TryGetValue(out Argument);
+            return CustomJsonReader.ParseElement(ArgumentJson5, CustomJsonReaderOptions.Json5).TryGetValue(out Argument);
         }
         else {
             Argument = default;
@@ -37,7 +37,7 @@ public record CommandCall(Command Command, Dictionary<string, string> Arguments,
     /// </summary>
     public bool TryGetArgument<T>(string Name, out T? Argument) {
         if (TryGetArgument(Name, out JsonElement ArgumentElement)) {
-            Argument = ArgumentElement.Deserialize<T>(JsonOptions.Mini);
+            Argument = ArgumentElement.Deserialize<T>(GlobalJsonOptions.Mini);
             return true;
         }
         else {

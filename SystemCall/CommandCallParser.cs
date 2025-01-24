@@ -2,8 +2,6 @@ using System.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using HjsonSharp;
-using System.Text.Json;
-using ResultZero;
 
 namespace SystemCall;
 
@@ -150,8 +148,8 @@ public static class CommandCallParser {
 
                 // Read JSON5 element
                 int ElementLength;
-                using (HjsonReader Reader = new(Input, Index, Input.Length - Index, HjsonReaderOptions.Json5)) {
-                    ElementLength = (int)Reader.ReadElementLength(IsRoot: false).Value;
+                using (CustomJsonReader Reader = new(Input, Index, Input.Length - Index, CustomJsonReaderOptions.Json5)) {
+                    ElementLength = (int)Reader.ReadElementLength().Value;
                 }
                 ReadOnlySpan<char> RawElement = Input.AsSpan(Index, ElementLength);
 
