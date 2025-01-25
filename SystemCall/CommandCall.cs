@@ -6,19 +6,19 @@ namespace SystemCall;
 /// <summary>
 /// Contains information about a call of a command including passed arguments.
 /// </summary>
-public record CommandCall(Command Command, Dictionary<string, string> Arguments, int TokenCount) {
+public record CommandCall(Command Command, IReadOnlyDictionary<string, string> Arguments, int TokenCount) {
     /// <summary>
     /// The command that has been called.
     /// </summary>
-    public Command Command { get; set; } = Command;
+    public Command Command { get; } = Command;
     /// <summary>
     /// The arguments passed to the command.
     /// </summary>
-    public Dictionary<string, string> Arguments { get; set; } = Arguments;
+    public IReadOnlyDictionary<string, string> Arguments { get; } = Arguments;
     /// <summary>
     /// The number of tokens used to call the command.
     /// </summary>
-    public int TokenCount { get; set; } = TokenCount;
+    public int TokenCount { get; } = TokenCount;
 
     /// <summary>
     /// Deserializes the passed JSON5 argument.
