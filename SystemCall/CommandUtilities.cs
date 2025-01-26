@@ -1,3 +1,4 @@
+using LinkDotNet.StringBuilder;
 using System.Buffers;
 using System.Text;
 
@@ -63,7 +64,7 @@ internal static class CommandUtilities {
     /// The escape characters are removed.
     /// </summary>
     public static List<string> SplitWithEscape(this ReadOnlySpan<char> Input, Rune SeparatorRune, Rune? EscapeRune) {
-        StringBuilder Segment = new();
+        ValueStringBuilder Segment = new(stackalloc char[32]);
         List<string> Result = [];
 
         int Index = 0;

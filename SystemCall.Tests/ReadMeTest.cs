@@ -19,7 +19,7 @@ public class ReadMeTest {
         }
 
         // Call commands
-        Assert.Equal("Weapon enhanced: Sword", CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand));
+        Assert.Equal("Weapon enhanced: Sword", string.Join("\n", CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand)));
     }
     [Fact]
     public void Test2() {
@@ -45,6 +45,6 @@ public class ReadMeTest {
         }
 
         // Call commands
-        Assert.Equal("Weapon enhanced: Sword", CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand));
+        Assert.Equal("Weapon enhanced: Sword", string.Join("\n", CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand)));
     }
 }

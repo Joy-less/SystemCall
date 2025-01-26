@@ -75,7 +75,7 @@ string? RunCommand(CommandCall Call) {
     }
 }
 
-string Output = CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand);
+List<string?> Outputs = CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand);
 ```
 
 ## Note

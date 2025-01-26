@@ -1,3 +1,4 @@
+using LinkDotNet.StringBuilder;
 using System.Text;
 
 namespace SystemCall;
@@ -12,9 +13,9 @@ public static class CommandParser {
     /// <exception cref="CommandSyntaxException"></exception>
     public static List<CommandComponent> ParseComponents(string Format) {
         List<CommandComponent> Components = [];
-        StringBuilder LiteralBuilder = new();
+        ValueStringBuilder LiteralBuilder = new(stackalloc char[32]);
 
-        void SubmitLiteral() {
+        void SubmitLiteral(ref ValueStringBuilder LiteralBuilder) {
             // Take literal
             string Literal = LiteralBuilder.ToString().Trim();
             LiteralBuilder.Clear();
@@ -52,7 +53,7 @@ public static class CommandParser {
             }
             else if (Rune.Value is '(') {
                 // Complete previous literal
-                SubmitLiteral();
+                SubmitLiteral(ref LiteralBuilder);
 
                 // Find closing bracket
                 int EndContentsSubIndex = Format.AsSpan(Index).FindClosingBracket('(', ')', '\\');
@@ -77,7 +78,7 @@ public static class CommandParser {
             }
             else if (Rune.Value is '{') {
                 // Complete previous literal
-                SubmitLiteral();
+                SubmitLiteral(ref LiteralBuilder);
 
                 // Find closing bracket
                 int EndContentsSubIndex = Format.AsSpan(Index).FindClosingBracket('{', '}', '\\');
@@ -104,7 +105,7 @@ public static class CommandParser {
             }
             else if (Rune.Value is '[') {
                 // Complete previous literal
-                SubmitLiteral();
+                SubmitLiteral(ref LiteralBuilder);
 
                 // Find closing bracket
                 int EndContentsSubIndex = Format.AsSpan(Index).FindClosingBracket('[', ']', '\\');
@@ -136,7 +137,7 @@ public static class CommandParser {
         }
 
         // Complete final literal
-        SubmitLiteral();
+        SubmitLiteral(ref LiteralBuilder);
 
         return Components;
     }

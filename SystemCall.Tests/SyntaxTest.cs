@@ -15,19 +15,19 @@ public class SyntaxTest {
     }
     [Fact]
     public void InterpretTest() {
-        Assert.Equal("Killed", CommandCallParser.Interpret("kill 'player' for 'no reason'", Commands, RunCommand));
-        Assert.Equal("Exploded\nExploded\nExploded", CommandCallParser.Interpret("explode\n    explode   ;explode", Commands, RunCommand));
-        Assert.Equal("Showing smile for 3.2s in Red", CommandCallParser.Interpret("show emoticon 'smile' for 3.2 seconds in colour 'Red'", Commands, RunCommand));
-        Assert.Equal("Showing smile for 0s in Red", CommandCallParser.Interpret("show emoticon 'smile' in colour 'Red'", Commands, RunCommand));
+        Assert.Equal("Killed", string.Join("\n", CommandCallParser.Interpret("kill 'player' for 'no reason'", Commands, RunCommand)));
+        Assert.Equal("Exploded\nExploded\nExploded", string.Join("\n", CommandCallParser.Interpret("explode\n    explode   ;explode", Commands, RunCommand)));
+        Assert.Equal("Showing smile for 3.2s in Red", string.Join("\n", CommandCallParser.Interpret("show emoticon 'smile' for 3.2 seconds in colour 'Red'", Commands, RunCommand)));
+        Assert.Equal("Showing smile for 0s in Red", string.Join("\n", CommandCallParser.Interpret("show emoticon 'smile' in colour 'Red'", Commands, RunCommand)));
     }
     [Fact]
     public void Json5Test() {
-        Assert.Equal("Killed", CommandCallParser.Interpret("kill \"player\" for \"no reason\"", Commands, RunCommand));
-        Assert.Equal("Killed", CommandCallParser.Interpret("kill 0 for {reason: 'none \\{\\}'}", Commands, RunCommand));
+        Assert.Equal("Killed", string.Join("\n", CommandCallParser.Interpret("kill \"player\" for \"no reason\"", Commands, RunCommand)));
+        Assert.Equal("Killed", string.Join("\n", CommandCallParser.Interpret("kill 0 for {reason: 'none \\{\\}'}", Commands, RunCommand)));
     }
     [Fact]
     public void WhitespaceTest() {
-        Assert.Equal("Killed", CommandCallParser.Interpret("kill   \t  'player'for'no reason'", Commands, RunCommand));
+        Assert.Equal("Killed", string.Join("\n", CommandCallParser.Interpret("kill   \t  'player'for'no reason'", Commands, RunCommand)));
     }
     [Fact]
     public void ExcessTest() {

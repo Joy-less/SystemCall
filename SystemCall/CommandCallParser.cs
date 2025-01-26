@@ -2,6 +2,7 @@ using System.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using HjsonSharp;
+using LinkDotNet.StringBuilder;
 
 namespace SystemCall;
 
@@ -10,57 +11,41 @@ namespace SystemCall;
 /// </summary>
 public static class CommandCallParser {
     /// <summary>
-    /// Parses the input for a sequence of command calls, runs them by invoking the callback function and compiles their output to a string.
+    /// Parses the input for a sequence of command calls, runs them by invoking the callback function and returns their outputs.
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
     /// <exception cref="CommandNotFoundException"/>
     /// <exception cref="CallArgumentException"/>
-    public static async Task<string> InterpretAsync(string Input, IEnumerable<Command> Commands, Func<CommandCall, Task<string?>> RunCommandAsync, string OutputSeparator = "\n") {
+    public static List<string?> Interpret(string Input, IEnumerable<Command> Commands, Func<CommandCall, string?> RunCommand) {
         // Run commands in input
-        StringBuilder Output = new();
+        List<string?> Outputs = [];
         try {
-            List<CommandCall> Calls = ParseCalls(Input, Commands);
-
-            bool IsFirst = true;
-            foreach (CommandCall Call in Calls) {
-                if (!IsFirst) {
-                    Output.Append(OutputSeparator);
-                }
-                IsFirst = false;
-
-                Output.Append(await RunCommandAsync(Call));
+            foreach (CommandCall Call in ParseCalls(Input, Commands)) {
+                Outputs.Add(RunCommand(Call));
             }
         }
         // Command errored
         catch (SystemCallException Exception) {
-            Output.Append(Exception.Message);
+            Outputs.Add(Exception.Message);
         }
         // Return success
-        return Output.ToString();
+        return Outputs;
     }
-    /// <inheritdoc cref="InterpretAsync(string, IEnumerable{Command}, Func{CommandCall, Task{string?}}, string)"/>
-    public static string Interpret(string Input, IEnumerable<Command> Commands, Func<CommandCall, string?> RunCommand, string OutputSeparator = "\n") {
+    /// <inheritdoc cref="Interpret(string, IEnumerable{Command}, Func{CommandCall, string?})"/>
+    public static async Task<List<string?>> InterpretAsync(string Input, IEnumerable<Command> Commands, Func<CommandCall, Task<string?>> RunCommandAsync) {
         // Run commands in input
-        StringBuilder Output = new();
+        List<string?> Outputs = [];
         try {
-            List<CommandCall> Calls = ParseCalls(Input, Commands);
-
-            bool IsFirst = true;
-            foreach (CommandCall Call in Calls) {
-                if (!IsFirst) {
-                    Output.Append(OutputSeparator);
-                }
-                IsFirst = false;
-
-                Output.Append(RunCommand(Call));
+            foreach (CommandCall Call in ParseCalls(Input, Commands)) {
+                Outputs.Add(await RunCommandAsync(Call));
             }
         }
         // Command errored
         catch (SystemCallException Exception) {
-            Output.Append(Exception.Message);
+            Outputs.Add(Exception.Message);
         }
         // Return success
-        return Output.ToString();
+        return Outputs;
     }
     /// <summary>
     /// Parses the input for a sequence of command calls.
@@ -96,7 +81,7 @@ public static class CommandCallParser {
     public static List<List<string>> TokenizeInputCalls(string Input) {
         List<List<string>> TokensPerCall = [];
         List<string> Tokens = [];
-        StringBuilder Token = new();
+        ValueStringBuilder Token = new(stackalloc char[32]);
 
         bool TrySubmitCall() {
             if (Tokens.Count == 0) {
@@ -106,7 +91,7 @@ public static class CommandCallParser {
             Tokens = [];
             return true;
         }
-        bool TrySubmitToken() {
+        bool TrySubmitToken(ref ValueStringBuilder Token) {
             if (Token.Length == 0) {
                 return false;
             }
@@ -141,7 +126,7 @@ public static class CommandCallParser {
             // JSON5 character
             else if (Rune.Value is '"' or '\'' or '{' or '}' or '[' or ']' or ':' or '/' or '#') {
                 // End previous token
-                TrySubmitToken();
+                TrySubmitToken(ref Token);
 
                 // Move to start of element
                 Index -= Rune.Utf16SequenceLength;
@@ -158,18 +143,18 @@ public static class CommandCallParser {
 
                 // Submit element as token
                 Token.Append(RawElement);
-                TrySubmitToken();
+                TrySubmitToken(ref Token);
             }
             // End of call
             else if (Rune.Value is '\n' or '\r' or '\u2028' or '\u2029' or ';') {
                 // End call
-                TrySubmitToken();
+                TrySubmitToken(ref Token);
                 TrySubmitCall();
             }
             // Whitespace
             else if (Rune.IsWhiteSpace(Rune)) {
                 // End token
-                TrySubmitToken();
+                TrySubmitToken(ref Token);
             }
             // Unreserved character
             else {
@@ -178,7 +163,7 @@ public static class CommandCallParser {
         }
 
         // Complete final call
-        TrySubmitToken();
+        TrySubmitToken(ref Token);
         TrySubmitCall();
 
         return TokensPerCall;
