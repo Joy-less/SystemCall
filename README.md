@@ -80,4 +80,4 @@ List<string?> Outputs = CommandCallParser.Interpret("Enhance my 'Sword'!", Comma
 
 ## Note
 
-System Call will migrate from JSON5 to JSONH when it is complete. See [https://github.com/jsonh-org/Jsonh](jsonh-org/Jsonh).
+System Call will migrate from JSON5 to JSONH when it is complete. See [jsonh-org/Jsonh](https://github.com/jsonh-org/Jsonh).
