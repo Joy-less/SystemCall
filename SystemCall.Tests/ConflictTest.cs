@@ -2,8 +2,8 @@
 
 public class ConflictTest {
     private readonly Command[] Commands = [
-        new("kill", "kill {name}"),
         new("kill_me", "kill me"),
+        new("kill", "kill {name}"),
     ];
 
     [Fact]

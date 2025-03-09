@@ -199,7 +199,7 @@ public static class CommandCallParser {
     public static bool TryParseCall(ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands, [NotNullWhen(true)] out CommandCall? Call) {
         // Match all possible calls
         List<CommandCall> Calls = ParseMatchingCalls(Tokens, Commands);
-        // Return call with most tokens
+        // Return call with most tokens (choosing first call if ambiguous)
         Call = Calls.MaxBy(Call => Call.TokenCount);
         return Call is not null;
     }

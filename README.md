@@ -78,6 +78,8 @@ string? RunCommand(CommandCall Call) {
 List<string?> Outputs = CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand);
 ```
 
+If the call is ambiguous between multiple commands, the first command is always chosen.
+
 ## Note
 
 System Call will migrate from JSON5 to JSONH when it is complete. See [jsonh-org/Jsonh](https://github.com/jsonh-org/Jsonh).
