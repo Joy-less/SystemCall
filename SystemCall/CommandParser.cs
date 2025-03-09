@@ -13,7 +13,9 @@ public static class CommandParser {
     /// <exception cref="CommandSyntaxException"></exception>
     public static List<CommandComponent> ParseComponents(string Format) {
         List<CommandComponent> Components = [];
-        ValueStringBuilder LiteralBuilder = new(stackalloc char[32]);
+
+        ValueStringBuilder LiteralBuilder = new(stackalloc char[64]);
+        using ValueStringBuilder ReadOnlyLiteralBuilder = LiteralBuilder; // Can't pass using variables by-ref
 
         void SubmitLiteral(ref ValueStringBuilder LiteralBuilder) {
             // Take literal

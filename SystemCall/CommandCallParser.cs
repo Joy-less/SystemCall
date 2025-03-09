@@ -81,7 +81,9 @@ public static class CommandCallParser {
     public static List<List<string>> TokenizeInputCalls(string Input) {
         List<List<string>> TokensPerCall = [];
         List<string> Tokens = [];
-        ValueStringBuilder Token = new(stackalloc char[32]);
+
+        ValueStringBuilder Token = new(stackalloc char[64]);
+        using ValueStringBuilder ReadOnlyToken = Token; // Can't pass using variables by-ref
 
         bool TrySubmitCall() {
             if (Tokens.Count == 0) {

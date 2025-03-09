@@ -64,7 +64,7 @@ internal static class CommandUtilities {
     /// The escape characters are removed.
     /// </summary>
     public static List<string> SplitWithEscape(this ReadOnlySpan<char> Input, Rune SeparatorRune, Rune? EscapeRune) {
-        ValueStringBuilder Segment = new(stackalloc char[32]);
+        using ValueStringBuilder Segment = new(stackalloc char[64]);
         List<string> Result = [];
 
         int Index = 0;
