@@ -82,8 +82,8 @@ public static class CommandCallParser {
         List<List<string>> TokensPerCall = [];
         List<string> Tokens = [];
 
-        ValueStringBuilder Token = new(stackalloc char[64]);
-        using ValueStringBuilder ReadOnlyToken = Token; // Can't pass using variables by-ref
+        ValueStringBuilder TokenBuilder = new(stackalloc char[64]);
+        using ValueStringBuilder ReadOnlyTokenBuilder = TokenBuilder; // Can't pass using variables by-ref
 
         bool TrySubmitCall() {
             if (Tokens.Count == 0) {
@@ -93,12 +93,12 @@ public static class CommandCallParser {
             Tokens = [];
             return true;
         }
-        bool TrySubmitToken(ref ValueStringBuilder Token) {
-            if (Token.Length == 0) {
+        bool TrySubmitToken(ref ValueStringBuilder TokenBuilder) {
+            if (TokenBuilder.Length == 0) {
                 return false;
             }
-            Tokens.Add(Token.ToString());
-            Token.Clear();
+            Tokens.Add(TokenBuilder.ToString());
+            TokenBuilder.Clear();
             return true;
         }
 
@@ -111,7 +111,7 @@ public static class CommandCallParser {
             // Escape character
             if (Rune.Value is '\\') {
                 // Append escape
-                Token.Append(Rune);
+                TokenBuilder.Append(Rune);
 
                 // Ensure not trailing escape
                 if (Index >= Input.Length) {
@@ -123,12 +123,12 @@ public static class CommandCallParser {
                 Index += EscapedRune.Utf16SequenceLength;
 
                 // Append escaped rune
-                Token.Append(EscapedRune);
+                TokenBuilder.Append(EscapedRune);
             }
             // JSON5 character
             else if (Rune.Value is '"' or '\'' or '{' or '}' or '[' or ']' or ':' or '/' or '#') {
                 // End previous token
-                TrySubmitToken(ref Token);
+                TrySubmitToken(ref TokenBuilder);
 
                 // Move to start of element
                 Index -= Rune.Utf16SequenceLength;
@@ -144,28 +144,28 @@ public static class CommandCallParser {
                 Index += ElementLength;
 
                 // Submit element as token
-                Token.Append(RawElement);
-                TrySubmitToken(ref Token);
+                TokenBuilder.Append(RawElement);
+                TrySubmitToken(ref TokenBuilder);
             }
             // End of call
             else if (Rune.Value is '\n' or '\r' or '\u2028' or '\u2029' or ';') {
                 // End call
-                TrySubmitToken(ref Token);
+                TrySubmitToken(ref TokenBuilder);
                 TrySubmitCall();
             }
             // Whitespace
             else if (Rune.IsWhiteSpace(Rune)) {
                 // End token
-                TrySubmitToken(ref Token);
+                TrySubmitToken(ref TokenBuilder);
             }
             // Unreserved character
             else {
-                Token.Append(Rune);
+                TokenBuilder.Append(Rune);
             }
         }
 
         // Complete final call
-        TrySubmitToken(ref Token);
+        TrySubmitToken(ref TokenBuilder);
         TrySubmitCall();
 
         return TokensPerCall;

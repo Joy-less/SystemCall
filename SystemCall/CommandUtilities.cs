@@ -64,7 +64,7 @@ internal static class CommandUtilities {
     /// The escape characters are removed.
     /// </summary>
     public static List<string> SplitWithEscape(this ReadOnlySpan<char> Input, Rune SeparatorRune, Rune? EscapeRune) {
-        using ValueStringBuilder Segment = new(stackalloc char[64]);
+        using ValueStringBuilder SegmentBuilder = new(stackalloc char[64]);
         List<string> Result = [];
 
         int Index = 0;
@@ -88,22 +88,22 @@ internal static class CommandUtilities {
                 Index += EscapedCharsConsumed;
 
                 // Append escaped rune
-                Segment.Append(EscapedRune);
+                SegmentBuilder.Append(EscapedRune);
             }
             // Separator
             else if (CurrentRune == SeparatorRune) {
-                Result.Add(Segment.ToString());
-                Segment.Clear();
+                Result.Add(SegmentBuilder.ToString());
+                SegmentBuilder.Clear();
             }
             // Other
             else {
-                Segment.Append(CurrentRune);
+                SegmentBuilder.Append(CurrentRune);
             }
         }
 
         // Add last segment
-        if (Segment.Length != 0) {
-            Result.Add(Segment.ToString());
+        if (SegmentBuilder.Length != 0) {
+            Result.Add(SegmentBuilder.ToString());
         }
 
         return Result;
