@@ -179,7 +179,8 @@ public static class CommandCallParser {
     /// <summary>
     /// Parses the tokens as possible calls for any of the commands.
     /// </summary>
-    public static IEnumerable<CommandCall> ParseMatchingCalls(ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands) {
+    public static List<CommandCall> ParseMatchingCalls(ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands) {
+        List<CommandCall> Calls = [];
         foreach (Command Command in Commands) {
             if (TryParseComponents(Tokens, Command.Components, out int TokenCount, out Dictionary<string, string>? Arguments)) {
                 // Ensure all tokens used up
@@ -187,16 +188,17 @@ public static class CommandCallParser {
                     continue;
                 }
                 // Call matches command
-                yield return new CommandCall(Command, Arguments, TokenCount);
+                Calls.Add(new CommandCall(Command, Arguments, TokenCount));
             }
         }
+        return Calls;
     }
     /// <summary>
     /// Parses the tokens as a call for any of the commands, prioritizing the call with the most tokens, otherwise the first command.
     /// </summary>
     public static bool TryParseCall(ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands, [NotNullWhen(true)] out CommandCall? Call) {
         // Match all possible calls
-        IEnumerable<CommandCall> Calls = ParseMatchingCalls(Tokens, Commands);
+        List<CommandCall> Calls = ParseMatchingCalls(Tokens, Commands);
         // Return call with most tokens (choosing first call if ambiguous)
         Call = Calls.MaxBy(Call => Call.TokenCount);
         return Call is not null;
