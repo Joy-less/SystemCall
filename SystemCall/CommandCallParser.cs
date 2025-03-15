@@ -79,7 +79,7 @@ public static class CommandCallParser {
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
     public static List<List<string>> TokenizeInputCalls(string Input) {
-        List<List<string>> TokensPerCall = [];
+        List<List<string>> TokensForCalls = [];
         List<string> Tokens = [];
 
         ValueStringBuilder TokenBuilder = new(stackalloc char[64]);
@@ -89,7 +89,7 @@ public static class CommandCallParser {
             if (Tokens.Count == 0) {
                 return false;
             }
-            TokensPerCall.Add(Tokens);
+            TokensForCalls.Add(Tokens);
             Tokens = [];
             return true;
         }
@@ -168,7 +168,7 @@ public static class CommandCallParser {
         TrySubmitToken(ref TokenBuilder);
         TrySubmitCall();
 
-        return TokensPerCall;
+        return TokensForCalls;
     }
     /// <summary>
     /// Parses a list of tokens for exactly one command call in the input.
