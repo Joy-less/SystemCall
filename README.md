@@ -5,6 +5,18 @@
 System Call is a command-parsing .NET library inspired by [Jinx](https://github.com/JamesBoer/Jinx) and named after [Sword Art Online](https://swordartonline.fandom.com/wiki/Sacred_Arts).
 
 It uses natural language syntax and is intended for use in command line interfaces and magic systems.
+
+```
+COMMAND: heal [me, everyone, player {name}] by {amount} (points)
+CALL: heal player "John Doe" by 10 points
+```
+```
+COMMAND: enhance (my) armament(!)
+CALL: Enhance Armament!
+```
+
+## Example
+
 ```cs
 using SystemCall;
 
