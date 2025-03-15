@@ -25,27 +25,21 @@ public record CommandArgumentComponent(string ArgumentName) : CommandComponent {
 /// <summary>
 /// A component that must be included verbatim.
 /// </summary>
-public record CommandLiteralComponent(List<string> LiteralTokens, bool CaseSensitive = false) : CommandComponent {
+public record CommandLiteralComponent(List<string> LiteralTokens, StringComparison ComparisonType = StringComparison.InvariantCultureIgnoreCase) : CommandComponent {
     /// <summary>
     /// The tokens to match.
     /// </summary>
     public List<string> LiteralTokens { get; set; } = LiteralTokens;
     /// <summary>
-    /// Whether the literal must be included in the same letter case.
+    /// The type of comparison to use when comparing literals.
     /// </summary>
-    public bool CaseSensitive { get; set; } = CaseSensitive;
+    public StringComparison StringComparison { get; set; } = ComparisonType;
 
     /// <summary>
     /// Constructs a <see cref="CommandLiteralComponent"/> by tokenizing the literal.
     /// </summary>
-    public CommandLiteralComponent(string Literal, bool CaseSensitive = false)
-        : this(CommandCallParser.TokenizeInputCall(Literal), CaseSensitive) {
-    }
-    /// <summary>
-    /// Converts <see cref="CaseSensitive"/> to a <see cref="StringComparison"/> used to compare literals.
-    /// </summary>
-    public StringComparison GetStringComparison() {
-        return CaseSensitive ? StringComparison.InvariantCulture : StringComparison.InvariantCultureIgnoreCase;
+    public CommandLiteralComponent(string Literal, StringComparison ComparisonType = StringComparison.InvariantCultureIgnoreCase)
+        : this(CommandCallParser.TokenizeInputCall(Literal), ComparisonType) {
     }
     /// <summary>
     /// Matches the tokens in the literal with the given tokens.
@@ -56,7 +50,7 @@ public record CommandLiteralComponent(List<string> LiteralTokens, bool CaseSensi
             string? Token = Index < Tokens.Length ? Tokens[Index] : null;
 
             // Token mismatch
-            if (!LiteralToken.Equals(Token, GetStringComparison())) {
+            if (!LiteralToken.Equals(Token, StringComparison)) {
                 TokenCount = 0;
                 return false;
             }
