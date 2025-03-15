@@ -9,7 +9,7 @@ public class OptionalTest {
     public void Test1() {
         // This won't work due to a limitation with the current approach.
         // See the README for an explanation.
-        //Assert.Equal("eat", CommandCallParser.ParseCall("eat \"me\" please", Commands).Command.Name);
-        //Assert.Equal("eat", CommandCallParser.ParseCall("eat please", Commands).Command.Name);
+        //CommandCallParser.ParseCall("eat \"me\" please", Commands).Command.Name.ShouldBe("eat");
+        //CommandCallParser.ParseCall("eat please", Commands).Command.Name.ShouldBe("eat");
     }
 }

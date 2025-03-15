@@ -10,28 +10,28 @@ public class SyntaxTest {
 
     [Fact]
     public void ParseCommandsTest() {
-        Assert.NotNull(CommandCallParser.ParseCall("kill 'player' for 'no reason'", Commands));
-        Assert.Equal(2, CommandCallParser.ParseCalls("kill 'player' for 'no reason';blow up", Commands).Count);
+        CommandCallParser.ParseCall("kill 'player' for 'no reason'", Commands).ShouldNotBeNull();
+        CommandCallParser.ParseCalls("kill 'player' for 'no reason';blow up", Commands).Count.ShouldBe(2);
     }
     [Fact]
     public void InterpretTest() {
-        Assert.Equal("Killed", string.Join("\n", CommandCallParser.Interpret("kill 'player' for 'no reason'", Commands, RunCommand)));
-        Assert.Equal("Exploded\nExploded\nExploded", string.Join("\n", CommandCallParser.Interpret("explode\n    explode   ;explode", Commands, RunCommand)));
-        Assert.Equal("Showing smile for 3.2s in Red", string.Join("\n", CommandCallParser.Interpret("show emoticon 'smile' for 3.2 seconds in colour 'Red'", Commands, RunCommand)));
-        Assert.Equal("Showing smile for 0s in Red", string.Join("\n", CommandCallParser.Interpret("show emoticon 'smile' in colour 'Red'", Commands, RunCommand)));
+        string.Join("\n", CommandCallParser.Interpret("kill 'player' for 'no reason'", Commands, RunCommand)).ShouldBe("Killed");
+        string.Join("\n", CommandCallParser.Interpret("explode\n    explode   ;explode", Commands, RunCommand)).ShouldBe("Exploded\nExploded\nExploded");
+        string.Join("\n", CommandCallParser.Interpret("show emoticon 'smile' for 3.2 seconds in colour 'Red'", Commands, RunCommand)).ShouldBe("Showing smile for 3.2s in Red");
+        string.Join("\n", CommandCallParser.Interpret("show emoticon 'smile' in colour 'Red'", Commands, RunCommand)).ShouldBe("Showing smile for 0s in Red");
     }
     [Fact]
     public void JsonhTest() {
-        Assert.Equal("Killed", string.Join("\n", CommandCallParser.Interpret("kill \"player\" for \"no reason\"", Commands, RunCommand)));
-        Assert.Equal("Killed", string.Join("\n", CommandCallParser.Interpret("kill 0 for {reason: 'none \\{\\}'}", Commands, RunCommand)));
+        string.Join("\n", CommandCallParser.Interpret("kill \"player\" for \"no reason\"", Commands, RunCommand)).ShouldBe("Killed");
+        string.Join("\n", CommandCallParser.Interpret("kill 0 for {reason: 'none \\{\\}'}", Commands, RunCommand)).ShouldBe("Killed");
     }
     [Fact]
     public void WhitespaceTest() {
-        Assert.Equal("Killed", string.Join("\n", CommandCallParser.Interpret("kill   \t  'player'for'no reason'", Commands, RunCommand)));
+        string.Join("\n", CommandCallParser.Interpret("kill   \t  'player'for'no reason'", Commands, RunCommand)).ShouldBe("Killed");
     }
     [Fact]
     public void ExcessTest() {
-        Assert.Throws<CommandNotFoundException>(() => CommandCallParser.ParseCalls("kill 'player' for 'no reason' okay", Commands));
+        Should.Throw<CommandNotFoundException>(() => CommandCallParser.ParseCalls("kill 'player' for 'no reason' okay", Commands));
     }
 
     private string? RunCommand(CommandCall Call) {

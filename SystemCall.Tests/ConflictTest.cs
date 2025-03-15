@@ -8,7 +8,7 @@ public class ConflictTest {
 
     [Fact]
     public void Test1() {
-        Assert.Equal("kill", CommandCallParser.ParseCall("kill \"me\"", Commands).Command.Name);
-        Assert.Equal("kill_me", CommandCallParser.ParseCall("kill me", Commands).Command.Name);
+        CommandCallParser.ParseCall("kill \"me\"", Commands).Command.Name.ShouldBe("kill");
+        CommandCallParser.ParseCall("kill me", Commands).Command.Name.ShouldBe("kill_me");
     }
 }

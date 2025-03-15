@@ -9,11 +9,11 @@ public class EscapeTest {
 
     [Fact]
     public void Test1() {
-        Assert.Equal("abc\nde\t", CommandCallParser.ParseCall(@"print 'abc\nde\t'", Commands).GetArgument<string>("object"));
+        CommandCallParser.ParseCall(@"print 'abc\nde\t'", Commands).GetArgument<string>("object").ShouldBe("abc\nde\t");
     }
     [Fact]
     public void Test2() {
-        Assert.Equal("speech marks\"\'\"\"", CommandCallParser.ParseCall(@"print 'speech marks""\'""""'", Commands).GetArgument<string>("object"));
+        CommandCallParser.ParseCall(@"print 'speech marks""\'""""'", Commands).GetArgument<string>("object").ShouldBe("speech marks\"\'\"\"");
     }
     [Fact]
     public void Test3() {
