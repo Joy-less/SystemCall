@@ -1,5 +1,3 @@
-using System.Text;
-using System.Buffers;
 using LinkDotNet.StringBuilder;
 
 namespace SystemCall;
@@ -18,86 +16,69 @@ internal static class CommandUtilities {
     ///  ^                  ^
     /// </code>
     /// </summary>
-    public static int FindClosingBracket(this ReadOnlySpan<char> Input, Rune OpenBracketRune, Rune CloseBracketRune, Rune? EscapeRune) {
+    public static int FindClosingBracket(this ReadOnlySpan<char> Input, char OpenBracketChar, char CloseBracketChar, char? EscapeChar) {
         int Depth = 1;
-        int Index = 0;
-        while (Index < Input.Length) {
-            // Read rune
-            if (Rune.DecodeFromUtf16(Input[Index..], out Rune CurrentRune, out int CurrentCharsConsumed) is not OperationStatus.Done) {
-                throw new CallSyntaxException("Invalid UTF-16 sequence");
-            }
-            Index += CurrentCharsConsumed;
+        for (int Index = 0; Index < Input.Length; Index++) {
+            char Char = Input[Index];
 
             // Open bracket
-            if (CurrentRune == OpenBracketRune) {
+            if (Char == OpenBracketChar) {
                 Depth++;
             }
             // Close bracket
-            else if (CurrentRune == CloseBracketRune) {
+            else if (Char == CloseBracketChar) {
                 Depth--;
                 if (Depth == 0) {
-                    return Index - CurrentCharsConsumed;
+                    return Index;
                 }
             }
             // Escape
-            else if (CurrentRune == EscapeRune) {
+            else if (Char == EscapeChar) {
                 // Ensure not trailing escape
-                if (Index >= Input.Length) {
+                if (Index + 1 >= Input.Length) {
                     throw new CallSyntaxException("Incomplete escape sequence: `\\`");
                 }
-                // Read escaped rune
-                if (Rune.DecodeFromUtf16(Input[Index..], out Rune _, out int EscapedCharsConsumed) is not OperationStatus.Done) {
-                    throw new CallSyntaxException("Invalid UTF-16 sequence");
-                }
-                Index += EscapedCharsConsumed;
+
+                // Read escaped character
+                Index++;
             }
         }
         // Closing bracket not found
         return -1;
     }
-    /// <inheritdoc cref="FindClosingBracket(ReadOnlySpan{char}, Rune, Rune, Rune?)"/>
-    public static int FindClosingBracket(this ReadOnlySpan<char> Input, char OpenBracketChar, char CloseBracketChar, char? EscapeChar) {
-        return FindClosingBracket(Input, (Rune)OpenBracketChar, (Rune)CloseBracketChar, (Rune?)EscapeChar);
-    }
     /// <summary>
     /// Splits the string by the separator, ignoring escaped separators.<br/>
     /// The escape characters are removed.
     /// </summary>
-    public static List<string> SplitWithEscape(this ReadOnlySpan<char> Input, Rune SeparatorRune, Rune? EscapeRune) {
+    public static List<string> SplitWithEscape(this ReadOnlySpan<char> Input, char SeparatorChar, char? EscapeChar) {
         using ValueStringBuilder SegmentBuilder = new(stackalloc char[64]);
         List<string> Result = [];
-
-        int Index = 0;
-        while (Index < Input.Length) {
-            // Read rune
-            if (Rune.DecodeFromUtf16(Input[Index..], out Rune CurrentRune, out int CurrentCharsConsumed) is not OperationStatus.Done) {
-                throw new CallSyntaxException("Invalid UTF-16 sequence");
-            }
-            Index += CurrentCharsConsumed;
+        
+        for (int Index = 0; Index < Input.Length; Index++) {
+            char Char = Input[Index];
 
             // Escape
-            if (CurrentRune == EscapeRune) {
+            if (Char == EscapeChar) {
                 // Ensure not trailing escape
-                if (Index >= Input.Length) {
+                if (Index + 1 >= Input.Length) {
                     throw new CallSyntaxException("Incomplete escape sequence: `\\`");
                 }
-                // Read escaped rune
-                if (Rune.DecodeFromUtf16(Input[Index..], out Rune EscapedRune, out int EscapedCharsConsumed) is not OperationStatus.Done) {
-                    throw new CallSyntaxException("Invalid UTF-16 sequence");
-                }
-                Index += EscapedCharsConsumed;
 
-                // Append escaped rune
-                SegmentBuilder.Append(EscapedRune);
+                // Read escaped character
+                Index++;
+                char EscapedChar = Input[Index];
+
+                // Append escaped character
+                SegmentBuilder.Append(EscapedChar);
             }
             // Separator
-            else if (CurrentRune == SeparatorRune) {
+            else if (Char == SeparatorChar) {
                 Result.Add(SegmentBuilder.ToString());
                 SegmentBuilder.Clear();
             }
             // Other
             else {
-                SegmentBuilder.Append(CurrentRune);
+                SegmentBuilder.Append(Char);
             }
         }
 
@@ -107,9 +88,5 @@ internal static class CommandUtilities {
         }
 
         return Result;
-    }
-    /// <inheritdoc cref="SplitWithEscape(ReadOnlySpan{char}, Rune, Rune?)"/>
-    public static List<string> SplitWithEscape(this ReadOnlySpan<char> Input, char SeparatorChar, char? EscapeChar) {
-        return SplitWithEscape(Input, (Rune)SeparatorChar, (Rune?)EscapeChar);
     }
 }

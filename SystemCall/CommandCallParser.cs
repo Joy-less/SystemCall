@@ -1,9 +1,7 @@
-using System.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using HjsonSharp;
 using LinkDotNet.StringBuilder;
-using System.Buffers;
 
 namespace SystemCall;
 
@@ -11,8 +9,6 @@ namespace SystemCall;
 /// Contains methods for interpreting command calls.
 /// </summary>
 public static class CommandCallParser {
-    private static readonly SearchValues<char> JsonhSymbols = SearchValues.Create(['"', '\'', '{', '}', '[', ']', ':', '/', '#']);
-
     /// <summary>
     /// Parses the input for a sequence of command calls, runs them by invoking the callback function and returns their outputs.
     /// </summary>
@@ -105,36 +101,30 @@ public static class CommandCallParser {
             return true;
         }
 
-        int Index = 0;
-        while (Index < Input.Length) {
-            // Read rune
-            Rune Rune = Rune.GetRuneAt(Input, Index);
-            Index += Rune.Utf16SequenceLength;
+        for (int Index = 0; Index < Input.Length; Index++) {
+            char Char = Input[Index];
 
-            // Escape character
-            if (Rune.Value is '\\') {
+            // Escaped character
+            if (Char is '\\') {
                 // Append escape
-                TokenBuilder.Append(Rune);
+                TokenBuilder.Append(Char);
 
                 // Ensure not trailing escape
-                if (Index >= Input.Length) {
+                if (Index + 1 >= Input.Length) {
                     throw new CallSyntaxException("Incomplete escape sequence: `\\`");
                 }
 
-                // Read escaped rune
-                Rune EscapedRune = Rune.GetRuneAt(Input, Index);
-                Index += EscapedRune.Utf16SequenceLength;
+                // Read escaped character
+                Index++;
+                char EscapedChar = Input[Index];
 
-                // Append escaped rune
-                TokenBuilder.Append(EscapedRune);
+                // Append escaped character
+                TokenBuilder.Append(EscapedChar);
             }
             // JSONH character
-            else if (Rune.IsBmp && JsonhSymbols.Contains((char)Rune.Value)) {
+            else if (Char is '"' or '\'' or '{' or '}' or '[' or ']' or ':' or '/' or '#') {
                 // End previous token
                 TrySubmitToken(ref TokenBuilder);
-
-                // Move to start of element
-                Index -= Rune.Utf16SequenceLength;
 
                 // Read JSONH element
                 int ElementLength;
@@ -144,26 +134,26 @@ public static class CommandCallParser {
                 ReadOnlySpan<char> RawElement = Input.AsSpan(Index, ElementLength);
 
                 // Move to end of element
-                Index += ElementLength;
+                Index += ElementLength - 1;
 
                 // Submit element as token
                 TokenBuilder.Append(RawElement);
                 TrySubmitToken(ref TokenBuilder);
             }
             // End of call
-            else if (Rune.Value is '\n' or '\r' or '\u2028' or '\u2029' or ';') {
+            else if (Char is '\n' or '\r' or '\u2028' or '\u2029' or ';') {
                 // End call
                 TrySubmitToken(ref TokenBuilder);
                 TrySubmitCall();
             }
             // Whitespace
-            else if (Rune.IsWhiteSpace(Rune)) {
+            else if (char.IsWhiteSpace(Char)) {
                 // End token
                 TrySubmitToken(ref TokenBuilder);
             }
             // Unreserved character
             else {
-                TokenBuilder.Append(Rune);
+                TokenBuilder.Append(Char);
             }
         }
 

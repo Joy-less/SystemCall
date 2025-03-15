@@ -1,4 +1,3 @@
-using System.Text;
 using LinkDotNet.StringBuilder;
 
 namespace SystemCall;
@@ -31,31 +30,33 @@ public static class CommandParser {
             Components.Add(new CommandLiteralComponent(Literal));
         }
 
-        int Index = 0;
-        while (Index < Format.Length) {
-            // Read rune
-            Rune Rune = Rune.GetRuneAt(Format, Index);
-            Index += Rune.Utf16SequenceLength;
+        for (int Index = 0; Index < Format.Length; Index++) {
+            char Char = Format[Index];
 
-            if (Rune.Value is '\\') {
+            // Escaped character
+            if (Char is '\\') {
                 // Append escape
-                LiteralBuilder.Append(Rune);
+                LiteralBuilder.Append(Char);
 
                 // Ensure not trailing escape
-                if (Index >= Format.Length) {
+                if (Index + 1 >= Format.Length) {
                     throw new CallSyntaxException("Incomplete escape sequence: `\\`");
                 }
 
-                // Read escaped rune
-                Rune EscapedRune = Rune.GetRuneAt(Format, Index);
-                Index += EscapedRune.Utf16SequenceLength;
+                // Read escaped character
+                Index++;
+                char EscapedChar = Format[Index];
 
-                // Append escaped rune
-                LiteralBuilder.Append(EscapedRune);
+                // Append escaped character
+                LiteralBuilder.Append(EscapedChar);
             }
-            else if (Rune.Value is '(') {
+            // Start optional tokens
+            else if (Char is '(') {
                 // Complete previous literal
                 SubmitLiteral(ref LiteralBuilder);
+
+                // Move past bracket
+                Index++;
 
                 // Find closing bracket
                 int EndContentsSubIndex = Format.AsSpan(Index).FindClosingBracket('(', ')', '\\');
@@ -67,20 +68,24 @@ public static class CommandParser {
                 // Get contents in brackets
                 string Contents = Format[Index..EndContentsIndex];
                 // Move past contents
-                Index = EndContentsIndex + 1;
+                Index = EndContentsIndex;
 
                 // Parse contents as components
                 List<CommandComponent> ContentsComponents = ParseComponents(Contents);
                 // Add optional
                 Components.Add(new CommandOptionalComponent(ContentsComponents));
             }
-            else if (Rune.Value is ')') {
+            else if (Char is ')') {
                 // Unexpected close bracket
                 throw new CommandSyntaxException("Unexpected bracket: ')'");
             }
-            else if (Rune.Value is '{') {
+            // Start argument token
+            else if (Char is '{') {
                 // Complete previous literal
                 SubmitLiteral(ref LiteralBuilder);
+
+                // Move past bracket
+                Index++;
 
                 // Find closing bracket
                 int EndContentsSubIndex = Format.AsSpan(Index).FindClosingBracket('{', '}', '\\');
@@ -92,7 +97,7 @@ public static class CommandParser {
                 // Get argument in brackets
                 string Argument = Format[Index..EndContentsIndex];
                 // Move past argument
-                Index = EndContentsIndex + 1;
+                Index = EndContentsIndex;
 
                 // Disallow recursion
                 if (Argument.Contains('{')) {
@@ -101,13 +106,17 @@ public static class CommandParser {
                 // Add argument
                 Components.Add(new CommandArgumentComponent(Argument));
             }
-            else if (Rune.Value is '}') {
+            else if (Char is '}') {
                 // Unexpected close bracket
                 throw new CommandSyntaxException("Unexpected bracket: '}'");
             }
-            else if (Rune.Value is '[') {
+            // Start choices
+            else if (Char is '[') {
                 // Complete previous literal
                 SubmitLiteral(ref LiteralBuilder);
+
+                // Move past bracket
+                Index++;
 
                 // Find closing bracket
                 int EndContentsSubIndex = Format.AsSpan(Index).FindClosingBracket('[', ']', '\\');
@@ -119,7 +128,7 @@ public static class CommandParser {
                 // Get contents in brackets
                 ReadOnlySpan<char> Contents = Format.AsSpan(Index..EndContentsIndex);
                 // Move past contents
-                Index = EndContentsIndex + 1;
+                Index = EndContentsIndex;
 
                 // Split choices by commas
                 IEnumerable<string> Choices = Contents.SplitWithEscape(',', '\\').Select(Choice => Choice.Trim());
@@ -128,13 +137,13 @@ public static class CommandParser {
                 // Add choices
                 Components.Add(new CommandChoicesComponent(ChoiceComponents));
             }
-            else if (Rune.Value is ']') {
+            else if (Char is ']') {
                 // Unexpected close bracket
                 throw new CommandSyntaxException("Unexpected bracket: ']'");
             }
+            // Unreserved character
             else {
-                // Unreserved character
-                LiteralBuilder.Append(Rune);
+                LiteralBuilder.Append(Char);
             }
         }
 
