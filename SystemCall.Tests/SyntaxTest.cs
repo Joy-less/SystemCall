@@ -21,7 +21,7 @@ public class SyntaxTest {
         Assert.Equal("Showing smile for 0s in Red", string.Join("\n", CommandCallParser.Interpret("show emoticon 'smile' in colour 'Red'", Commands, RunCommand)));
     }
     [Fact]
-    public void Json5Test() {
+    public void JsonhTest() {
         Assert.Equal("Killed", string.Join("\n", CommandCallParser.Interpret("kill \"player\" for \"no reason\"", Commands, RunCommand)));
         Assert.Equal("Killed", string.Join("\n", CommandCallParser.Interpret("kill 0 for {reason: 'none \\{\\}'}", Commands, RunCommand)));
     }

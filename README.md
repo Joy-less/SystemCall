@@ -27,8 +27,6 @@ string? RunCommand(CommandCall Call) {
 CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand);
 ```
 
-Arguments are parsed as [JSON5](https://github.com/Joy-less/HjsonSharp), which is a superset of JSON.
-
 ## Defining Commands
 
 Commands can be defined using a format string:
@@ -59,12 +57,16 @@ Command[] Commands = [
 
 ## Calling Commands
 
-Commands can be parsed into a list of calls:
+Calls can be parsed using an input string:
 ```cs
 List<CommandCall> Calls = CommandCallParser.ParseCalls("enhance my 'Sword'!", Commands);
 ```
 
-Alternatively, commands can be parsed and interpreted, returning the output:
+Calls use the following syntax:
+- Each call is separated by newlines or semicolons: `eat me; drink me`
+- Any token can be escaped with a backslash: `not a bracket \(`
+
+Alternatively, calls can be parsed and interpreted, returning the output:
 ```cs
 string? RunCommand(CommandCall Call) {
     switch (Call.Command.Name) {
@@ -78,8 +80,10 @@ string? RunCommand(CommandCall Call) {
 List<string?> Outputs = CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand);
 ```
 
-If the call is ambiguous between multiple commands, the first command is always chosen.
+Arguments are parsed as [JSONH](https://github.com/jsonh-org/Jsonh), which is a superset of JSON.
 
-## Note
+> [!NOTE]
+> Since JSONH is incomplete, arguments are currently parsed as JSON5, which is a subset of JSONH.
+> System Call will migrate to JSONH when it is complete. See [jsonh-org/Jsonh](https://github.com/jsonh-org/Jsonh).
 
-System Call will migrate from JSON5 to JSONH when it is complete. See [jsonh-org/Jsonh](https://github.com/jsonh-org/Jsonh).
+If a call is ambiguous between multiple commands, the first command is prioritized.

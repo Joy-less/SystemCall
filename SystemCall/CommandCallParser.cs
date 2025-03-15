@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using HjsonSharp;
 using LinkDotNet.StringBuilder;
+using System.Buffers;
 
 namespace SystemCall;
 
@@ -10,6 +11,8 @@ namespace SystemCall;
 /// Contains methods for interpreting command calls.
 /// </summary>
 public static class CommandCallParser {
+    private static readonly SearchValues<char> JsonhSymbols = SearchValues.Create(['"', '\'', '{', '}', '[', ']', ':', '/', '#']);
+
     /// <summary>
     /// Parses the input for a sequence of command calls, runs them by invoking the callback function and returns their outputs.
     /// </summary>
@@ -125,15 +128,15 @@ public static class CommandCallParser {
                 // Append escaped rune
                 TokenBuilder.Append(EscapedRune);
             }
-            // JSON5 character
-            else if (Rune.Value is '"' or '\'' or '{' or '}' or '[' or ']' or ':' or '/' or '#') {
+            // JSONH character
+            else if (Rune.IsBmp && JsonhSymbols.Contains((char)Rune.Value)) {
                 // End previous token
                 TrySubmitToken(ref TokenBuilder);
 
                 // Move to start of element
                 Index -= Rune.Utf16SequenceLength;
 
-                // Read JSON5 element
+                // Read JSONH element
                 int ElementLength;
                 using (CustomJsonReader Reader = new(Input, Index, Input.Length - Index, CustomJsonReaderOptions.Json5)) {
                     ElementLength = (int)Reader.ReadElementLength().Value;
@@ -254,13 +257,13 @@ public static class CommandCallParser {
             case CommandArgumentComponent ArgumentComponent: {
                 // Match a token as the argument
                 if (!Tokens.IsEmpty) {
-                    // Get argument value
-                    string ArgumentValue = Tokens[TokenCount];
+                    // Get argument JSONH
+                    string ArgumentJsonh = Tokens[TokenCount];
                     // Next token
                     TokenCount++;
                     // Argument matched
                     Arguments = new() {
-                        [ArgumentComponent.ArgumentName] = ArgumentValue
+                        [ArgumentComponent.ArgumentName] = ArgumentJsonh
                     };
                     return true;
                 }
