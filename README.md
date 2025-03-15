@@ -87,3 +87,20 @@ Arguments are parsed as [JSONH](https://github.com/jsonh-org/Jsonh), which is a 
 > System Call will migrate to JSONH when it is complete. See [jsonh-org/Jsonh](https://github.com/jsonh-org/Jsonh).
 
 If a call is ambiguous between multiple commands, the first command is prioritized.
+
+## Known Bugs/Limitations
+
+### Optional arguments must have a leading/trailing token
+
+In the following example, `object` is an optional argument:
+```
+eat ({object}) please
+```
+However, calling `eat please` will not match the command.
+The reason is that `please` is parsed as the optional `object` argument rather than the token.
+This is a current limitation with the System Call parser that may be fixed in the future.
+
+The current workaround is to add another token within the brackets:
+```
+eat (the {object}) please
+```
