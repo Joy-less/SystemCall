@@ -1,5 +1,5 @@
 using System.Text.Json;
-using HjsonSharp;
+using JsonhCs;
 
 namespace SystemCall;
 
@@ -25,7 +25,7 @@ public record CommandCall(Command Command, IReadOnlyDictionary<string, string> A
     /// </summary>
     public bool TryGetArgument(string Name, out JsonElement Argument) {
         if (Arguments.TryGetValue(Name, out string? ArgumentJsonh)) {
-            return CustomJsonReader.ParseElement(ArgumentJsonh, CustomJsonReaderOptions.Json5).TryGetValue(out Argument);
+            return JsonhReader.ParseElement(ArgumentJsonh).TryGetValue(out Argument);
         }
         else {
             Argument = default;
@@ -37,7 +37,7 @@ public record CommandCall(Command Command, IReadOnlyDictionary<string, string> A
     /// </summary>
     public bool TryGetArgument<T>(string Name, out T? Argument) {
         if (TryGetArgument(Name, out JsonElement ArgumentElement)) {
-            Argument = ArgumentElement.Deserialize<T>(GlobalJsonOptions.Mini);
+            Argument = ArgumentElement.Deserialize<T>(JsonhReader.MiniJson);
             return true;
         }
         else {

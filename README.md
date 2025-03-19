@@ -94,10 +94,6 @@ List<string?> Outputs = CommandCallParser.Interpret("Enhance my 'Sword'!", Comma
 
 Arguments are parsed as [JSONH](https://github.com/jsonh-org/Jsonh), which is a superset of JSON.
 
-> [!NOTE]
-> Since JSONH is incomplete, arguments are currently parsed as JSON5, which is a subset of JSONH.
-> System Call will migrate to JSONH when it is complete. See [jsonh-org/Jsonh](https://github.com/jsonh-org/Jsonh).
-
 If a call is ambiguous between multiple commands, the first command is prioritized.
 
 ## Known Bugs/Limitations

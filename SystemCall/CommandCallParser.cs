@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using HjsonSharp;
+using JsonhCs;
 using LinkDotNet.StringBuilder;
 
 namespace SystemCall;
@@ -127,14 +127,15 @@ public static class CommandCallParser {
                 TrySubmitToken(ref TokenBuilder);
 
                 // Read JSONH element
-                int ElementLength;
-                using (CustomJsonReader Reader = new(Input, Index, Input.Length - Index, CustomJsonReaderOptions.Json5)) {
-                    ElementLength = (int)Reader.ReadElementLength().Value;
+                int RawElementLength;
+                using (JsonhReader Reader = new(Input[Index..])) {
+                    Reader.ParseElement().ThrowIfError();
+                    RawElementLength = (int)Reader.CharCounter;
                 }
-                ReadOnlySpan<char> RawElement = Input.AsSpan(Index, ElementLength);
+                ReadOnlySpan<char> RawElement = Input.AsSpan(Index, RawElementLength);
 
                 // Move to end of element
-                Index += ElementLength - 1;
+                Index += RawElementLength - 1;
 
                 // Submit element as token
                 TokenBuilder.Append(RawElement);

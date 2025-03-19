@@ -23,14 +23,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HjsonSharp" Version="3.5.0" />
-    <PackageReference Include="LinkDotNet.StringBuilder" Version="2.4.0" PrivateAssets="all" />
+    <PackageReference Include="JsonhCs" Version="1.1.0" />
+    <PackageReference Include="LinkDotNet.StringBuilder" Version="2.4.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\README.md">
+    <None Include="../README.md">
       <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
+      <PackagePath>/</PackagePath>
     </None>
   </ItemGroup>
 </Project>
