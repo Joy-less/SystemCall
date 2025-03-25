@@ -5,10 +5,10 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>Joyless</Authors>
     <Title>System Call</Title>
@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <PackageReference Include="JsonhCs" Version="1.2.0" />
-    <PackageReference Include="LinkDotNet.StringBuilder" Version="2.4.0" />
+    <PackageReference Include="LinkDotNet.StringBuilder" Version="2.4.1" />
   </ItemGroup>
 
   <ItemGroup>
