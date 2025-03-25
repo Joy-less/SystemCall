@@ -83,9 +83,7 @@ internal static class CommandUtilities {
         }
 
         // Add last segment
-        if (SegmentBuilder.Length != 0) {
-            Result.Add(SegmentBuilder.ToString());
-        }
+        Result.Add(SegmentBuilder.ToString());
 
         return Result;
     }
