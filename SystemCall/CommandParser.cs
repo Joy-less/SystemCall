@@ -131,7 +131,7 @@ public static class CommandParser {
                 Index = EndContentsIndex;
 
                 // Split choices by commas
-                IEnumerable<string> Choices = Contents.SplitWithEscape(',', '\\').Select(Choice => Choice.Trim());
+                IEnumerable<string> Choices = Contents.SplitWithEscape(',', '\\', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 // Parse choices as components
                 List<List<CommandComponent>> ChoiceComponents = Choices.Select(ParseComponents).ToList();
                 // Add choices

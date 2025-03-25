@@ -50,9 +50,27 @@ internal static class CommandUtilities {
     /// Splits the string by the separator, ignoring escaped separators.<br/>
     /// The escape characters are removed.
     /// </summary>
-    public static List<string> SplitWithEscape(this ReadOnlySpan<char> Input, char SeparatorChar, char? EscapeChar) {
-        using ValueStringBuilder SegmentBuilder = new(stackalloc char[64]);
+    public static List<string> SplitWithEscape(this ReadOnlySpan<char> Input, char SeparatorChar, char? EscapeChar, StringSplitOptions Options = StringSplitOptions.None) {
         List<string> Result = [];
+
+        ValueStringBuilder SegmentBuilder = new(stackalloc char[64]);
+        using ValueStringBuilder ReadOnlySegmentBuilder = SegmentBuilder; // Can't pass using variables by-ref
+
+        bool TrySubmitSegment(ref ValueStringBuilder SegmentBuilder) {
+            if (Options.HasFlag(StringSplitOptions.TrimEntries)) {
+                SegmentBuilder.Trim();
+            }
+
+            if (Options.HasFlag(StringSplitOptions.RemoveEmptyEntries)) {
+                if (SegmentBuilder.Length == 0) {
+                    return false;
+                }
+            }
+
+            Result.Add(SegmentBuilder.ToString());
+            SegmentBuilder.Clear();
+            return true;
+        }
         
         for (int Index = 0; Index < Input.Length; Index++) {
             char Char = Input[Index];
@@ -73,8 +91,7 @@ internal static class CommandUtilities {
             }
             // Separator
             else if (Char == SeparatorChar) {
-                Result.Add(SegmentBuilder.ToString());
-                SegmentBuilder.Clear();
+                TrySubmitSegment(ref SegmentBuilder);
             }
             // Other
             else {
@@ -83,7 +100,7 @@ internal static class CommandUtilities {
         }
 
         // Add last segment
-        Result.Add(SegmentBuilder.ToString());
+        TrySubmitSegment(ref SegmentBuilder);
 
         return Result;
     }
