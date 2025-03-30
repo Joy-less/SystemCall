@@ -5,57 +5,62 @@ using LinkDotNet.StringBuilder;
 
 namespace SystemCall;
 
-/// <summary>
-/// Contains methods for interpreting command calls.
-/// </summary>
-public static class CommandCallParser {
+partial class CommandCall {
     /// <summary>
-    /// Parses the input for a sequence of command calls, runs them by invoking the callback function and returns their outputs.
+    /// Parses the input for a sequence of command calls, executes them and returns their results.
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
     /// <exception cref="CommandNotFoundException"/>
     /// <exception cref="CallArgumentException"/>
-    public static List<string?> Interpret(string Input, IEnumerable<Command> Commands, Func<CommandCall, string?> RunCommand) {
+    public static List<object?> Execute(string Input, IEnumerable<Command> Commands) {
         // Run commands in input
-        List<string?> Outputs = [];
+        List<object?> Results = [];
         try {
-            foreach (CommandCall Call in ParseCalls(Input, Commands)) {
-                Outputs.Add(RunCommand(Call));
+            foreach (CommandCall Call in ParseAll(Input, Commands)) {
+                if (Call.Command.Execute is null) {
+                    Results.Add(null);
+                    continue;
+                }
+                Results.Add(Call.Command.Execute.Invoke(Call));
             }
         }
         // Command errored
         catch (SystemCallException Exception) {
-            Outputs.Add(Exception.Message);
+            Results.Add(Exception.Message);
         }
         // Return success
-        return Outputs;
+        return Results;
     }
-    /// <inheritdoc cref="Interpret(string, IEnumerable{Command}, Func{CommandCall, string?})"/>
-    public static async Task<List<string?>> InterpretAsync(string Input, IEnumerable<Command> Commands, Func<CommandCall, Task<string?>> RunCommandAsync) {
+    /// <inheritdoc cref="Execute(string, IEnumerable{Command})"/>
+    public static async Task<List<object?>> ExecuteAsync(string Input, IEnumerable<Command> Commands) {
         // Run commands in input
-        List<string?> Outputs = [];
+        List<object?> Results = [];
         try {
-            foreach (CommandCall Call in ParseCalls(Input, Commands)) {
-                Outputs.Add(await RunCommandAsync(Call));
+            foreach (CommandCall Call in ParseAll(Input, Commands)) {
+                if (Call.Command.ExecuteAsync is null) {
+                    Results.Add(null);
+                    continue;
+                }
+                Results.Add(await Call.Command.ExecuteAsync.Invoke(Call));
             }
         }
         // Command errored
         catch (SystemCallException Exception) {
-            Outputs.Add(Exception.Message);
+            Results.Add(Exception.Message);
         }
         // Return success
-        return Outputs;
+        return Results;
     }
     /// <summary>
     /// Parses the input for a sequence of command calls.
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
     /// <exception cref="CommandNotFoundException"/>
-    public static List<CommandCall> ParseCalls(string Input, IEnumerable<Command> Commands) {
+    public static List<CommandCall> ParseAll(string Input, IEnumerable<Command> Commands) {
         List<CommandCall> Calls = [];
         // Parse each command call from input tokens
-        foreach (List<string> CommandTokens in TokenizeInputCalls(Input)) {
-            if (TryParseCall(CollectionsMarshal.AsSpan(CommandTokens), Commands, out CommandCall? Call)) {
+        foreach (List<string> CommandTokens in TokenizeAll(Input)) {
+            if (TryParseFromTokens(CollectionsMarshal.AsSpan(CommandTokens), Commands, out CommandCall? Call)) {
                 Calls.Add(Call);
             }
             else {
@@ -69,15 +74,15 @@ public static class CommandCallParser {
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
     /// <exception cref="CommandNotFoundException"/>
-    public static CommandCall ParseCall(string Input, IEnumerable<Command> Commands) {
-        return ParseCalls(Input, Commands).SingleOrDefault()
+    public static CommandCall ParseSingle(string Input, IEnumerable<Command> Commands) {
+        return ParseAll(Input, Commands).SingleOrDefault()
             ?? throw new CallSyntaxException($"Expected single command: `{Input}`");
     }
     /// <summary>
     /// Parses a list of tokens for each command call in the input.
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
-    public static List<List<string>> TokenizeInputCalls(string Input) {
+    public static List<List<string>> TokenizeAll(string Input) {
         List<List<string>> TokensForCalls = [];
         List<string> Tokens = [];
 
@@ -168,14 +173,14 @@ public static class CommandCallParser {
     /// Parses a list of tokens for exactly one command call in the input.
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
-    public static List<string> TokenizeInputCall(string Input) {
-        return TokenizeInputCalls(Input).SingleOrDefault()
+    public static List<string> TokenizeSingle(string Input) {
+        return TokenizeAll(Input).SingleOrDefault()
             ?? throw new CallSyntaxException($"Expected single command: `{Input}`");
     }
     /// <summary>
     /// Parses the tokens as possible calls for any of the commands.
     /// </summary>
-    public static List<CommandCall> ParseMatchingCalls(ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands) {
+    public static List<CommandCall> FindMatches(ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands) {
         List<CommandCall> Calls = [];
         foreach (Command Command in Commands) {
             if (TryParseComponents(Tokens, Command.Components, out int TokenCount, out Dictionary<string, string>? Arguments)) {
@@ -192,9 +197,9 @@ public static class CommandCallParser {
     /// <summary>
     /// Parses the tokens as a call for any of the commands, prioritizing the call with the most tokens, otherwise the first command.
     /// </summary>
-    public static bool TryParseCall(ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands, [NotNullWhen(true)] out CommandCall? Call) {
+    public static bool TryParseFromTokens(ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands, [NotNullWhen(true)] out CommandCall? Call) {
         // Match all possible calls
-        List<CommandCall> Calls = ParseMatchingCalls(Tokens, Commands);
+        List<CommandCall> Calls = FindMatches(Tokens, Commands);
         // Return call with most tokens (choosing first call if ambiguous)
         Call = Calls.MaxBy(Call => Call.TokenCount);
         return Call is not null;

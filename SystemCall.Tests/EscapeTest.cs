@@ -9,19 +9,19 @@ public class EscapeTest {
 
     [Fact]
     public void Test1() {
-        CommandCallParser.ParseCall(@"print 'abc\nde\t'", Commands).GetArgument<string>("object").ShouldBe("abc\nde\t");
+        CommandCall.ParseSingle(@"print 'abc\nde\t'", Commands).GetArgument<string>("object").ShouldBe("abc\nde\t");
     }
     [Fact]
     public void Test2() {
-        CommandCallParser.ParseCall(@"print 'speech marks""\'""""'", Commands).GetArgument<string>("object").ShouldBe("speech marks\"\'\"\"");
+        CommandCall.ParseSingle(@"print 'speech marks""\'""""'", Commands).GetArgument<string>("object").ShouldBe("speech marks\"\'\"\"");
     }
     [Fact]
     public void Test3() {
-        CommandCallParser.ParseCall(@"esc\{", Commands);
+        CommandCall.ParseSingle(@"esc\{", Commands);
     }
     [Fact]
     public void Test4() {
-        CommandCallParser.ParseCall(@"a,b", Commands);
-        CommandCallParser.ParseCall(@"c", Commands);
+        CommandCall.ParseSingle(@"a,b", Commands);
+        CommandCall.ParseSingle(@"c", Commands);
     }
 }

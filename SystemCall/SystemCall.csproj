@@ -5,6 +5,9 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- IDE0290: Use primary constructor -->
+    <NoWarn>IDE0290</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>

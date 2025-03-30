@@ -5,21 +5,13 @@ public class ReadMeTest {
     public void Test1() {
         // Define commands
         Command[] Commands = [
-            new("enhance_weapon", "enhance my {weapon}(!)"),
+            new("enhance_weapon", "enhance my {weapon}(!)", Call => {
+                return $"Weapon enhanced: {Call.GetArgument<string>("weapon")}";
+            }),
         ];
 
-        // Run commands
-        string? RunCommand(CommandCall Call) {
-            switch (Call.Command.Name) {
-                case "enhance_weapon":
-                    return $"Weapon enhanced: {Call.GetArgument<string>("weapon")}";
-                default:
-                    return null;
-            }
-        }
-
         // Call commands
-        string.Join("\n", CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand)).ShouldBe("Weapon enhanced: Sword");
+        string.Join("\n", CommandCall.Execute("Enhance my 'Sword'!", Commands)).ShouldBe("Weapon enhanced: Sword");
     }
     [Fact]
     public void Test2() {
@@ -31,20 +23,12 @@ public class ReadMeTest {
                 new CommandOptionalComponent([
                     new CommandLiteralComponent("!"),
                 ]),
-            ]),
+            ], Call => {
+                return $"Weapon enhanced: {Call.GetArgument<string>("weapon")}";
+            }),
         ];
 
-        // Run commands
-        string? RunCommand(CommandCall Call) {
-            switch (Call.Command.Name) {
-                case "enhance_weapon":
-                    return $"Weapon enhanced: {Call.GetArgument<string>("weapon")}";
-                default:
-                    return null;
-            }
-        }
-
         // Call commands
-        string.Join("\n", CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand)).ShouldBe("Weapon enhanced: Sword");
+        string.Join("\n", CommandCall.Execute("Enhance my 'Sword'!", Commands)).ShouldBe("Weapon enhanced: Sword");
     }
 }

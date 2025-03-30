@@ -39,7 +39,7 @@ public record CommandLiteralComponent(List<string> LiteralTokens, StringComparis
     /// Constructs a <see cref="CommandLiteralComponent"/> by tokenizing the literal.
     /// </summary>
     public CommandLiteralComponent(string Literal, StringComparison ComparisonType = StringComparison.InvariantCultureIgnoreCase)
-        : this(CommandCallParser.TokenizeInputCall(Literal), ComparisonType) {
+        : this(CommandCall.TokenizeSingle(Literal), ComparisonType) {
     }
     /// <summary>
     /// Matches the tokens in the literal with the given tokens.

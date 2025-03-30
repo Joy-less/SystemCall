@@ -2,10 +2,7 @@ using LinkDotNet.StringBuilder;
 
 namespace SystemCall;
 
-/// <summary>
-/// Contains methods for interpreting command definitions.
-/// </summary>
-public static class CommandParser {
+partial class Command {
     /// <summary>
     /// Parses the components of the command definition.
     /// </summary>
@@ -133,7 +130,7 @@ public static class CommandParser {
                 // Split choices by commas
                 IEnumerable<string> Choices = Contents.SplitWithEscape(',', '\\', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 // Parse choices as components
-                List<List<CommandComponent>> ChoiceComponents = Choices.Select(ParseComponents).ToList();
+                List<List<CommandComponent>> ChoiceComponents = [.. Choices.Select(ParseComponents)];
                 // Add choices
                 Components.Add(new CommandChoicesComponent(ChoiceComponents));
             }

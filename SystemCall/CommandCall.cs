@@ -6,20 +6,28 @@ namespace SystemCall;
 /// <summary>
 /// Contains information about a call of a command including passed arguments.
 /// </summary>
-public record CommandCall(Command Command, IReadOnlyDictionary<string, string> Arguments, int TokenCount) {
+public partial class CommandCall {
     /// <summary>
     /// The command that has been called.
     /// </summary>
-    public Command Command { get; } = Command;
+    public Command Command { get; }
     /// <summary>
     /// The arguments passed to the command.
     /// </summary>
-    public IReadOnlyDictionary<string, string> Arguments { get; } = Arguments;
+    public IDictionary<string, string> Arguments { get; }
     /// <summary>
     /// The number of tokens used to call the command.
     /// </summary>
-    public int TokenCount { get; } = TokenCount;
+    public int TokenCount { get; }
 
+    /// <summary>
+    /// Constructs a <see cref="CommandCall"/> from the command and arguments.
+    /// </summary>
+    public CommandCall(Command Command, IDictionary<string, string> Arguments, int TokenCount) {
+        this.Command = Command;
+        this.Arguments = Arguments;
+        this.TokenCount = TokenCount;
+    }
     /// <summary>
     /// Deserializes the passed JSONH argument.
     /// </summary>
