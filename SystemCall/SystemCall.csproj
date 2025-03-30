@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="JsonhCs" Version="1.2.0" />
+    <PackageReference Include="JsonhCs" Version="1.4.0" />
     <PackageReference Include="LinkDotNet.StringBuilder" Version="2.4.1" />
   </ItemGroup>
 
