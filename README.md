@@ -22,21 +22,13 @@ using SystemCall;
 
 // Define commands
 Command[] Commands = [
-    new("enhance_weapon", "enhance my {weapon}(!)"),
+    new("enhance_weapon", "enhance my {weapon}(!)", Call => {
+        return $"Weapon enhanced: {Call.GetArgument<string>("weapon")}";
+    }),
 ];
 
-// Run commands
-string? RunCommand(CommandCall Call) {
-    switch (Call.Command.Name) {
-        case "enhance_weapon":
-            return $"Weapon enhanced: {Call.GetArgument<string>("weapon")}";
-        default:
-            return null;
-    }
-}
-
 // Call commands
-CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand);
+string.Join("\n", CommandCall.Execute("Enhance my 'Sword'!", Commands)).ShouldBe("Weapon enhanced: Sword");
 ```
 
 ## Defining Commands
@@ -71,25 +63,16 @@ Command[] Commands = [
 
 Calls can be parsed using an input string:
 ```cs
-List<CommandCall> Calls = CommandCallParser.ParseCalls("enhance my 'Sword'!", Commands);
+List<CommandCall> Calls = CommandCall.ParseAll("enhance my 'Sword'!", Commands);
 ```
 
 Calls use the following syntax:
 - Each call is separated by newlines or semicolons: `eat me; drink me`
 - Any token can be escaped with a backslash: `not a bracket \(`
 
-Alternatively, calls can be parsed and interpreted, returning the output:
+Alternatively, calls can be parsed and executed, returning a result:
 ```cs
-string? RunCommand(CommandCall Call) {
-    switch (Call.Command.Name) {
-        case "enhance_weapon":
-            return $"Weapon enhanced: {Call.GetArgument<string>("weapon")}";
-        default:
-            return null;
-    }
-}
-
-List<string?> Outputs = CommandCallParser.Interpret("Enhance my 'Sword'!", Commands, RunCommand);
+List<object?> Outputs = CommandCall.Execute("Enhance my 'Sword'!", Commands);
 ```
 
 Arguments are parsed as [JSONH](https://github.com/jsonh-org/Jsonh), which is a superset of JSON.
