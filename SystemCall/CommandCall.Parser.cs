@@ -134,7 +134,7 @@ partial class CommandCall {
                 // Read JSONH element
                 int RawElementLength;
                 using (JsonhReader Reader = new(Input[Index..])) {
-                    Reader.ParseElement().ThrowIfError();
+                    Reader.ParseNode().ThrowIfError();
                     RawElementLength = (int)Reader.CharCounter;
                 }
                 ReadOnlySpan<char> RawElement = Input.AsSpan(Index, RawElementLength);

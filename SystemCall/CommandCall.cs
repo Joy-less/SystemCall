@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using JsonhCs;
 
 namespace SystemCall;
@@ -21,6 +23,11 @@ public partial class CommandCall {
     public int TokenCount { get; }
 
     /// <summary>
+    /// Warning message for dynamic serialization.
+    /// </summary>
+    private const string UnreferencedCodeMessage = "JSON serialization and deserialization might require types that cannot be statically analyzed.";
+
+    /// <summary>
     /// Constructs a <see cref="CommandCall"/> from the command and arguments.
     /// </summary>
     public CommandCall(Command Command, IDictionary<string, string> Arguments, int TokenCount) {
@@ -31,9 +38,9 @@ public partial class CommandCall {
     /// <summary>
     /// Deserializes the passed JSONH argument.
     /// </summary>
-    public bool TryGetArgument(string Name, out JsonElement Argument) {
+    public bool TryGetArgument(string Name, out JsonNode? Argument) {
         if (Arguments.TryGetValue(Name, out string? ArgumentJsonh)) {
-            return JsonhReader.ParseElement(ArgumentJsonh).TryGetValue(out Argument);
+            return JsonhReader.ParseNode(ArgumentJsonh).TryGetValue(out Argument);
         }
         else {
             Argument = default;
@@ -43,8 +50,9 @@ public partial class CommandCall {
     /// <summary>
     /// Deserializes the passed JSONH argument as the given type.
     /// </summary>
+    [RequiresUnreferencedCode(UnreferencedCodeMessage), RequiresDynamicCode(UnreferencedCodeMessage)]
     public bool TryGetArgument<T>(string Name, out T? Argument) {
-        if (TryGetArgument(Name, out JsonElement ArgumentElement)) {
+        if (TryGetArgument(Name, out JsonNode? ArgumentElement)) {
             Argument = ArgumentElement.Deserialize<T>(JsonhReader.MiniJson);
             return true;
         }
@@ -56,8 +64,8 @@ public partial class CommandCall {
     /// <summary>
     /// Deserializes the passed JSONH argument.
     /// </summary>
-    public JsonElement GetArgument(string Name) {
-        if (TryGetArgument(Name, out JsonElement Argument)) {
+    public JsonNode? GetArgument(string Name) {
+        if (TryGetArgument(Name, out JsonNode? Argument)) {
             return Argument;
         }
         throw new CallArgumentException($"Invalid argument: '{Name}'");
@@ -65,6 +73,7 @@ public partial class CommandCall {
     /// <summary>
     /// Deserializes the passed JSONH argument as the given type.
     /// </summary>
+    [RequiresUnreferencedCode(UnreferencedCodeMessage), RequiresDynamicCode(UnreferencedCodeMessage)]
     public T? GetArgument<T>(string Name) {
         if (TryGetArgument(Name, out T? Argument)) {
             return Argument;
@@ -74,8 +83,8 @@ public partial class CommandCall {
     /// <summary>
     /// Deserializes the passed JSONH argument or returns the default.
     /// </summary>
-    public JsonElement GetArgument(string Name, JsonElement Default = default) {
-        if (TryGetArgument(Name, out JsonElement Argument)) {
+    public JsonNode? GetArgument(string Name, JsonNode? Default = default) {
+        if (TryGetArgument(Name, out JsonNode? Argument)) {
             return Argument;
         }
         return Default;
@@ -83,6 +92,7 @@ public partial class CommandCall {
     /// <summary>
     /// Deserializes the passed JSONH argument as the given type or returns the default.
     /// </summary>
+    [RequiresUnreferencedCode(UnreferencedCodeMessage), RequiresDynamicCode(UnreferencedCodeMessage)]
     public T? GetArgumentOrDefault<T>(string Name, T? Default = default) {
         if (TryGetArgument(Name, out T? Argument)) {
             return Argument;
