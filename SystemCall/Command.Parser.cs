@@ -15,7 +15,8 @@ partial class Command {
 
         void SubmitLiteral(ref ValueStringBuilder LiteralBuilder) {
             // Take literal
-            string Literal = LiteralBuilder.ToString().Trim();
+            LiteralBuilder.Trim();
+            string Literal = LiteralBuilder.ToString();
             LiteralBuilder.Clear();
 
             // Ensure literal present
