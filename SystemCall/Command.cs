@@ -69,7 +69,7 @@ public partial class Command {
             return null;
         }
         return (CommandCall Call) => {
-            return ExecuteAsync(Call).Result;
+            return ExecuteAsync(Call).GetAwaiter().GetResult();
         };
     }
 }
