@@ -16,7 +16,7 @@ internal static class CommandUtilities {
     ///  ^                  ^
     /// </code>
     /// </summary>
-    public static int FindClosingBracket(this ReadOnlySpan<char> Input, char OpenBracketChar, char CloseBracketChar, char? EscapeChar) {
+    public static int FindClosingBracket(this scoped ReadOnlySpan<char> Input, char OpenBracketChar, char CloseBracketChar, char? EscapeChar) {
         int Depth = 1;
         for (int Index = 0; Index < Input.Length; Index++) {
             char Char = Input[Index];
@@ -50,7 +50,7 @@ internal static class CommandUtilities {
     /// Splits the string by the separator, ignoring escaped separators.<br/>
     /// The escape characters are removed.
     /// </summary>
-    public static List<string> SplitWithEscape(this ReadOnlySpan<char> Input, char SeparatorChar, char? EscapeChar, StringSplitOptions Options = StringSplitOptions.None) {
+    public static List<string> SplitWithEscape(this scoped ReadOnlySpan<char> Input, char SeparatorChar, char? EscapeChar, StringSplitOptions Options = StringSplitOptions.None) {
         List<string> Result = [];
 
         ValueStringBuilder SegmentBuilder = new(stackalloc char[64]);

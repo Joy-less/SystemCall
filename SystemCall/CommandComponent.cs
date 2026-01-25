@@ -44,7 +44,7 @@ public record CommandLiteralComponent(List<string> LiteralTokens, StringComparis
     /// <summary>
     /// Matches the tokens in the literal with the given tokens.
     /// </summary>
-    public bool TryMatch(ReadOnlySpan<string> Tokens, out int TokenCount) {
+    public bool TryMatch(scoped ReadOnlySpan<string> Tokens, out int TokenCount) {
         for (int Index = 0; Index < LiteralTokens.Count; Index++) {
             string LiteralToken = LiteralTokens[Index];
             string? Token = Index < Tokens.Length ? Tokens[Index] : null;

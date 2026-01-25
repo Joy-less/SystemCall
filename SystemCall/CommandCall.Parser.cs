@@ -180,7 +180,7 @@ partial class CommandCall {
     /// <summary>
     /// Parses the tokens as possible calls for any of the commands.
     /// </summary>
-    public static List<CommandCall> FindMatches(ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands) {
+    public static List<CommandCall> FindMatches(scoped ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands) {
         List<CommandCall> Calls = [];
         foreach (Command Command in Commands) {
             if (TryParseComponents(Tokens, Command.Components, out int TokenCount, out Dictionary<string, string>? Arguments)) {
@@ -197,7 +197,7 @@ partial class CommandCall {
     /// <summary>
     /// Parses the tokens as a call for any of the commands, prioritizing the call with the most tokens, otherwise the first command.
     /// </summary>
-    public static bool TryParseFromTokens(ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands, [NotNullWhen(true)] out CommandCall? Call) {
+    public static bool TryParseFromTokens(scoped ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands, [NotNullWhen(true)] out CommandCall? Call) {
         // Match all possible calls
         List<CommandCall> Calls = FindMatches(Tokens, Commands);
         // Return call with most tokens (choosing first call if ambiguous)
@@ -207,7 +207,7 @@ partial class CommandCall {
     /// <summary>
     /// Parses the tokens as the sequence of command components.
     /// </summary>
-    public static bool TryParseComponents(ReadOnlySpan<string> Tokens, IEnumerable<CommandComponent> Components, out int TokenCount, [NotNullWhen(true)] out Dictionary<string, string>? Arguments) {
+    public static bool TryParseComponents(scoped ReadOnlySpan<string> Tokens, IEnumerable<CommandComponent> Components, out int TokenCount, [NotNullWhen(true)] out Dictionary<string, string>? Arguments) {
         TokenCount = 0;
         Arguments = [];
 
@@ -234,7 +234,7 @@ partial class CommandCall {
     /// <summary>
     /// Parses the tokens as the command component.
     /// </summary>
-    public static bool TryParseComponent(ReadOnlySpan<string> Tokens, CommandComponent Component, out int TokenCount, out Dictionary<string, string>? Arguments) {
+    public static bool TryParseComponent(scoped ReadOnlySpan<string> Tokens, CommandComponent Component, out int TokenCount, out Dictionary<string, string>? Arguments) {
         TokenCount = 0;
         Arguments = null;
 
