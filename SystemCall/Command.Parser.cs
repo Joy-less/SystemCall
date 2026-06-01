@@ -7,7 +7,7 @@ partial class Command {
     /// Parses the components of the command definition.
     /// </summary>
     /// <exception cref="CommandSyntaxException"></exception>
-    public static List<CommandComponent> ParseComponents(string Format) {
+    public static List<CommandComponent> ParseComponents(scoped ReadOnlySpan<char> Format) {
         List<CommandComponent> Components = [];
 
         ValueStringBuilder LiteralBuilder = new(stackalloc char[64]);
@@ -57,14 +57,14 @@ partial class Command {
                 Index++;
 
                 // Find closing bracket
-                int EndContentsSubIndex = Format.AsSpan(Index).FindClosingBracket('(', ')', '\\');
+                int EndContentsSubIndex = Format[Index..].FindClosingBracket('(', ')', '\\');
                 if (EndContentsSubIndex < 0) {
                     throw new CommandSyntaxException("Unclosed bracket: '('");
                 }
                 int EndContentsIndex = Index + EndContentsSubIndex;
 
                 // Get contents in brackets
-                string Contents = Format[Index..EndContentsIndex];
+                ReadOnlySpan<char> Contents = Format[Index..EndContentsIndex];
                 // Move past contents
                 Index = EndContentsIndex;
 
@@ -86,14 +86,14 @@ partial class Command {
                 Index++;
 
                 // Find closing bracket
-                int EndContentsSubIndex = Format.AsSpan(Index).FindClosingBracket('{', '}', '\\');
+                int EndContentsSubIndex = Format[Index..].FindClosingBracket('{', '}', '\\');
                 if (EndContentsSubIndex < 0) {
                     throw new CommandSyntaxException("Unclosed bracket: '{'");
                 }
                 int EndContentsIndex = Index + EndContentsSubIndex;
 
                 // Get argument in brackets
-                string Argument = Format[Index..EndContentsIndex];
+                ReadOnlySpan<char> Argument = Format[Index..EndContentsIndex];
                 // Move past argument
                 Index = EndContentsIndex;
 
@@ -102,7 +102,7 @@ partial class Command {
                     throw new CommandSyntaxException("Invalid recursion: '{'");
                 }
                 // Add argument
-                Components.Add(new CommandArgumentComponent(Argument));
+                Components.Add(new CommandArgumentComponent(Argument.ToString()));
             }
             else if (Char is '}') {
                 // Unexpected close bracket
@@ -117,21 +117,24 @@ partial class Command {
                 Index++;
 
                 // Find closing bracket
-                int EndContentsSubIndex = Format.AsSpan(Index).FindClosingBracket('[', ']', '\\');
+                int EndContentsSubIndex = Format[Index..].FindClosingBracket('[', ']', '\\');
                 if (EndContentsSubIndex < 0) {
                     throw new CommandSyntaxException("Unclosed bracket: '['");
                 }
                 int EndContentsIndex = Index + EndContentsSubIndex;
 
                 // Get contents in brackets
-                ReadOnlySpan<char> Contents = Format.AsSpan(Index..EndContentsIndex);
+                ReadOnlySpan<char> Contents = Format[Index..EndContentsIndex];
                 // Move past contents
                 Index = EndContentsIndex;
 
                 // Split choices by commas
                 IEnumerable<string> Choices = Contents.SplitWithEscape(',', '\\', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 // Parse choices as components
-                List<List<CommandComponent>> ChoiceComponents = [.. Choices.Select(ParseComponents)];
+                List<List<CommandComponent>> ChoiceComponents = [];
+                foreach (string Choice in Choices) {
+                    ChoiceComponents.Add(ParseComponents(Choice));
+                }
                 // Add choices
                 Components.Add(new CommandChoicesComponent(ChoiceComponents));
             }
