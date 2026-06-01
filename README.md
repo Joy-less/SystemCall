@@ -77,4 +77,6 @@ List<object?> Outputs = CommandCall.Execute("Enhance my 'Sword'!", Commands);
 
 Arguments are parsed as [JSONH](https://github.com/jsonh-org/Jsonh), which is a superset of JSON.
 
-If a call is ambiguous between multiple commands, the first command is prioritized.
+If a call is ambiguous between multiple commands, calls are prioritized in this order:
+1. The call with the most tokens is prioritized (e.g. call with 5 tokens prioritized over call with 3 tokens)
+1. The call for the first command is prioritized (e.g. call for the 2nd command prioritized over call for the 5th command)
