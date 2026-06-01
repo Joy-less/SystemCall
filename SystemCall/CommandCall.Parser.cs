@@ -12,7 +12,7 @@ partial class CommandCall {
     /// <exception cref="CallSyntaxException"/>
     /// <exception cref="CommandNotFoundException"/>
     /// <exception cref="CallArgumentException"/>
-    public static List<object?> Execute(string Input, IEnumerable<Command> Commands) {
+    public static List<object?> Execute(string Input, scoped ReadOnlySpan<Command> Commands) {
         // Run commands in input
         List<object?> Results = [];
         try {
@@ -31,12 +31,12 @@ partial class CommandCall {
         // Return success
         return Results;
     }
-    /// <inheritdoc cref="Execute(string, IEnumerable{Command})"/>
-    public static async Task<List<object?>> ExecuteAsync(string Input, IEnumerable<Command> Commands) {
+    /// <inheritdoc cref="Execute(string, ReadOnlySpan{Command})"/>
+    public static async Task<List<object?>> ExecuteAsync(string Input, ReadOnlyMemory<Command> Commands) {
         // Run commands in input
         List<object?> Results = [];
         try {
-            foreach (CommandCall Call in ParseAll(Input, Commands)) {
+            foreach (CommandCall Call in ParseAll(Input, Commands.Span)) {
                 if (Call.Command.ExecuteAsync is null) {
                     Results.Add(null);
                     continue;
@@ -56,7 +56,7 @@ partial class CommandCall {
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
     /// <exception cref="CommandNotFoundException"/>
-    public static List<CommandCall> ParseAll(string Input, IEnumerable<Command> Commands) {
+    public static List<CommandCall> ParseAll(string Input, scoped ReadOnlySpan<Command> Commands) {
         List<CommandCall> Calls = [];
         // Parse each command call from input tokens
         foreach (List<string> CommandTokens in TokenizeAll(Input)) {
@@ -74,7 +74,7 @@ partial class CommandCall {
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
     /// <exception cref="CommandNotFoundException"/>
-    public static CommandCall ParseSingle(string Input, IEnumerable<Command> Commands) {
+    public static CommandCall ParseSingle(string Input, scoped ReadOnlySpan<Command> Commands) {
         return ParseAll(Input, Commands).SingleOrDefault()
             ?? throw new CallSyntaxException($"Expected single command: `{Input}`");
     }
@@ -180,10 +180,10 @@ partial class CommandCall {
     /// <summary>
     /// Parses the tokens as possible calls for any of the commands.
     /// </summary>
-    public static List<CommandCall> FindMatches(scoped ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands) {
+    public static List<CommandCall> FindMatches(scoped ReadOnlySpan<string> Tokens, scoped ReadOnlySpan<Command> Commands) {
         List<CommandCall> Calls = [];
         foreach (Command Command in Commands) {
-            if (TryParseComponents(Tokens, Command.Components, out int TokenCount, out Dictionary<string, string>? Arguments)) {
+            if (TryParseComponents(Tokens, CollectionsMarshal.AsSpan(Command.Components), out int TokenCount, out Dictionary<string, string>? Arguments)) {
                 // Ensure all tokens used up
                 if (TokenCount < Tokens.Length) {
                     continue;
@@ -197,7 +197,7 @@ partial class CommandCall {
     /// <summary>
     /// Parses the tokens as a call for any of the commands, prioritizing the call with the most tokens, otherwise the first command.
     /// </summary>
-    public static bool TryParseFromTokens(scoped ReadOnlySpan<string> Tokens, IEnumerable<Command> Commands, [NotNullWhen(true)] out CommandCall? Call) {
+    public static bool TryParseFromTokens(scoped ReadOnlySpan<string> Tokens, scoped ReadOnlySpan<Command> Commands, [NotNullWhen(true)] out CommandCall? Call) {
         // Match all possible calls
         List<CommandCall> Calls = FindMatches(Tokens, Commands);
         // Return call with most tokens (choosing first call if ambiguous)
@@ -207,13 +207,14 @@ partial class CommandCall {
     /// <summary>
     /// Parses the tokens as the sequence of command components.
     /// </summary>
-    public static bool TryParseComponents(scoped ReadOnlySpan<string> Tokens, IEnumerable<CommandComponent> Components, out int TokenCount, [NotNullWhen(true)] out Dictionary<string, string>? Arguments) {
+    public static bool TryParseComponents(scoped ReadOnlySpan<string> Tokens, scoped ReadOnlySpan<CommandComponent> Components, out int TokenCount, [NotNullWhen(true)] out Dictionary<string, string>? Arguments) {
         TokenCount = 0;
         Arguments = [];
 
         // Match each component
-        foreach ((int Index, CommandComponent Component) in Components.Index()) {
-            IEnumerable<CommandComponent> RemainingComponents = Components.Skip(Index + 1);
+        for (int Index = 0; Index < Components.Length; Index++) {
+            CommandComponent Component = Components[Index];
+            ReadOnlySpan<CommandComponent> RemainingComponents = Components[(Index + 1)..];
 
             // Component mismatched
             if (!TryParseComponent(Tokens[TokenCount..], Component, RemainingComponents, out int ComponentTokenCount, out Dictionary<string, string>? NewArguments)) {
@@ -236,7 +237,7 @@ partial class CommandCall {
     /// <summary>
     /// Parses the tokens as the command component.
     /// </summary>
-    public static bool TryParseComponent(scoped ReadOnlySpan<string> Tokens, CommandComponent Component, IEnumerable<CommandComponent> RemainingComponents, out int TokenCount, out Dictionary<string, string>? Arguments) {
+    public static bool TryParseComponent(scoped ReadOnlySpan<string> Tokens, CommandComponent Component, scoped ReadOnlySpan<CommandComponent> RemainingComponents, out int TokenCount, out Dictionary<string, string>? Arguments) {
         TokenCount = 0;
         Arguments = null;
 
@@ -244,7 +245,7 @@ partial class CommandCall {
             // Optional
             case CommandOptionalComponent OptionalComponent: {
                 // Try to match optional component
-                if (TryParseComponents(Tokens, OptionalComponent.Components, out int OptionalTokenCount, out Dictionary<string, string>? OptionalArguments)) {
+                if (TryParseComponents(Tokens, CollectionsMarshal.AsSpan(OptionalComponent.Components), out int OptionalTokenCount, out Dictionary<string, string>? OptionalArguments)) {
                     // Check if remaining components can still be parsed after consuming OptionalTokenCount
                     if (TryParseComponents(Tokens[OptionalTokenCount..], RemainingComponents, out _, out _)) {
                         // Remaining components match - consume the optional tokens
@@ -253,7 +254,7 @@ partial class CommandCall {
                         return true;
                     }
                     // If we're at the end and optional matched, that's OK too
-                    if (!RemainingComponents.Any()) {
+                    if (RemainingComponents.IsEmpty) {
                         TokenCount = OptionalTokenCount;
                         Arguments = OptionalArguments;
                         return true;
@@ -294,7 +295,7 @@ partial class CommandCall {
             case CommandChoicesComponent ChoicesComponent: {
                 // Match any of the choices
                 foreach (List<CommandComponent> Choice in ChoicesComponent.Choices) {
-                    if (TryParseComponents(Tokens, Choice, out TokenCount, out Arguments)) {
+                    if (TryParseComponents(Tokens, CollectionsMarshal.AsSpan(Choice), out TokenCount, out Arguments)) {
                         // Choice matched
                         return true;
                     }
