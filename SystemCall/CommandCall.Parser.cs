@@ -200,8 +200,16 @@ partial class CommandCall {
     public static bool TryParseFromTokens(scoped ReadOnlySpan<string> Tokens, scoped ReadOnlySpan<Command> Commands, [NotNullWhen(true)] out CommandCall? Call) {
         // Match all possible calls
         List<CommandCall> Calls = FindMatches(Tokens, Commands);
-        // Return call with most tokens (choosing first call if ambiguous)
-        Call = Calls.MaxBy(Call => Call.TokenCount);
+
+        // Return best call (prioritized by most tokens then first command)
+        int MaxCallTokens = -1;
+        Call = null;
+        foreach (CommandCall PossibleCall in Calls) {
+            if (PossibleCall.TokenCount > MaxCallTokens) {
+                MaxCallTokens = PossibleCall.TokenCount;
+                Call = PossibleCall;
+            }
+        }
         return Call is not null;
     }
     /// <summary>
