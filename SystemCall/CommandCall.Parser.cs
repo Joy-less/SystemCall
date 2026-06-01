@@ -212,9 +212,11 @@ partial class CommandCall {
         Arguments = [];
 
         // Match each component
-        foreach (CommandComponent Component in Components) {
+        foreach ((int Index, CommandComponent Component) in Components.Index()) {
+            IEnumerable<CommandComponent> RemainingComponents = Components.Skip(Index + 1);
+
             // Component mismatched
-            if (!TryParseComponent(Tokens[TokenCount..], Component, out int ComponentTokenCount, out Dictionary<string, string>? NewArguments)) {
+            if (!TryParseComponent(Tokens[TokenCount..], Component, RemainingComponents, out int ComponentTokenCount, out Dictionary<string, string>? NewArguments)) {
                 TokenCount = 0;
                 Arguments = null;
                 return false;
@@ -234,19 +236,31 @@ partial class CommandCall {
     /// <summary>
     /// Parses the tokens as the command component.
     /// </summary>
-    public static bool TryParseComponent(scoped ReadOnlySpan<string> Tokens, CommandComponent Component, out int TokenCount, out Dictionary<string, string>? Arguments) {
+    public static bool TryParseComponent(scoped ReadOnlySpan<string> Tokens, CommandComponent Component, IEnumerable<CommandComponent> RemainingComponents, out int TokenCount, out Dictionary<string, string>? Arguments) {
         TokenCount = 0;
         Arguments = null;
 
         switch (Component) {
             // Optional
             case CommandOptionalComponent OptionalComponent: {
-                // Match every optional component
-                if (TryParseComponents(Tokens, OptionalComponent.Components, out TokenCount, out Arguments)) {
-                    // Optional components matched
-                    return true;
+                // Try to match optional component
+                if (TryParseComponents(Tokens, OptionalComponent.Components, out int OptionalTokenCount, out Dictionary<string, string>? OptionalArguments)) {
+                    // Check if remaining components can still be parsed after consuming OptionalTokenCount
+                    if (TryParseComponents(Tokens[OptionalTokenCount..], RemainingComponents, out _, out _)) {
+                        // Remaining components match - consume the optional tokens
+                        TokenCount = OptionalTokenCount;
+                        Arguments = OptionalArguments;
+                        return true;
+                    }
+                    // If we're at the end and optional matched, that's OK too
+                    if (!RemainingComponents.Any()) {
+                        TokenCount = OptionalTokenCount;
+                        Arguments = OptionalArguments;
+                        return true;
+                    }
+                    // Remaining components don't match - skip the optional
                 }
-                // Not matched (OK)
+                // Not matched (OK for optional)
                 return true;
             }
             // Argument
