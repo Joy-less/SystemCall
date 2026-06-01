@@ -98,7 +98,7 @@ partial class CommandCall {
             return true;
         }
         bool TrySubmitToken(ref ValueStringBuilder TokenBuilder) {
-            if (TokenBuilder.Length == 0) {
+            if (TokenBuilder.IsEmpty) {
                 return false;
             }
             Tokens.Add(TokenBuilder.ToString());
