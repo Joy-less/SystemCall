@@ -12,7 +12,7 @@ partial class CommandCall {
     /// <exception cref="CallSyntaxException"/>
     /// <exception cref="CommandNotFoundException"/>
     /// <exception cref="CallArgumentException"/>
-    public static List<object?> Execute(string Input, scoped ReadOnlySpan<Command> Commands) {
+    public static List<object?> Execute(scoped ReadOnlySpan<char> Input, scoped ReadOnlySpan<Command> Commands) {
         // Run commands in input
         List<object?> Results = [];
         try {
@@ -31,12 +31,12 @@ partial class CommandCall {
         // Return success
         return Results;
     }
-    /// <inheritdoc cref="Execute(string, ReadOnlySpan{Command})"/>
-    public static async Task<List<object?>> ExecuteAsync(string Input, ReadOnlyMemory<Command> Commands) {
+    /// <inheritdoc cref="Execute(ReadOnlySpan{char}, ReadOnlySpan{Command})"/>
+    public static async Task<List<object?>> ExecuteAsync(ReadOnlyMemory<char> Input, ReadOnlyMemory<Command> Commands) {
         // Run commands in input
         List<object?> Results = [];
         try {
-            foreach (CommandCall Call in ParseAll(Input, Commands.Span)) {
+            foreach (CommandCall Call in ParseAll(Input.Span, Commands.Span)) {
                 if (Call.Command.ExecuteAsync is null) {
                     Results.Add(null);
                     continue;
@@ -56,7 +56,7 @@ partial class CommandCall {
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
     /// <exception cref="CommandNotFoundException"/>
-    public static List<CommandCall> ParseAll(string Input, scoped ReadOnlySpan<Command> Commands) {
+    public static List<CommandCall> ParseAll(scoped ReadOnlySpan<char> Input, scoped ReadOnlySpan<Command> Commands) {
         List<CommandCall> Calls = [];
         // Parse each command call from input tokens
         foreach (List<string> CommandTokens in TokenizeAll(Input)) {
@@ -74,7 +74,7 @@ partial class CommandCall {
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
     /// <exception cref="CommandNotFoundException"/>
-    public static CommandCall ParseSingle(string Input, scoped ReadOnlySpan<Command> Commands) {
+    public static CommandCall ParseSingle(scoped ReadOnlySpan<char> Input, scoped ReadOnlySpan<Command> Commands) {
         return ParseAll(Input, Commands).SingleOrDefault()
             ?? throw new CallSyntaxException($"Expected single command: `{Input}`");
     }
@@ -82,7 +82,7 @@ partial class CommandCall {
     /// Parses a list of tokens for each command call in the input.
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
-    public static List<List<string>> TokenizeAll(string Input) {
+    public static List<List<string>> TokenizeAll(scoped ReadOnlySpan<char> Input) {
         List<List<string>> TokensForCalls = [];
         List<string> Tokens = [];
 
@@ -133,11 +133,11 @@ partial class CommandCall {
 
                 // Read JSONH element
                 int RawElementLength;
-                using (JsonhReader Reader = new(Input[Index..])) {
+                using (JsonhReader Reader = new(Input[Index..].ToString())) {
                     Reader.ParseNode().ThrowIfError();
                     RawElementLength = (int)Reader.CharCounter;
                 }
-                ReadOnlySpan<char> RawElement = Input.AsSpan(Index, RawElementLength);
+                ReadOnlySpan<char> RawElement = Input.Slice(Index, RawElementLength);
 
                 // Move to end of element
                 Index += RawElementLength - 1;
@@ -173,7 +173,7 @@ partial class CommandCall {
     /// Parses a list of tokens for exactly one command call in the input.
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
-    public static List<string> TokenizeSingle(string Input) {
+    public static List<string> TokenizeSingle(scoped ReadOnlySpan<char> Input) {
         return TokenizeAll(Input).SingleOrDefault()
             ?? throw new CallSyntaxException($"Expected single command: `{Input}`");
     }
