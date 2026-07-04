@@ -11,44 +11,31 @@ partial class CommandCall {
     /// </summary>
     /// <exception cref="CallSyntaxException"/>
     /// <exception cref="CommandNotFoundException"/>
-    /// <exception cref="CallArgumentException"/>
     public static List<object?> Execute(scoped ReadOnlySpan<char> Input, scoped ReadOnlySpan<Command> Commands) {
-        // Run commands in input
+        // Run command calls in input
         List<object?> Results = [];
-        try {
-            foreach (CommandCall Call in ParseAll(Input, Commands)) {
-                if (Call.Command.Execute is null) {
-                    Results.Add(null);
-                    continue;
-                }
-                Results.Add(Call.Command.Execute.Invoke(Call));
+        foreach (CommandCall Call in ParseAll(Input, Commands)) {
+            if (Call.Command.Execute is null) {
+                Results.Add(null);
+                continue;
             }
+            Results.Add(Call.Command.Execute.Invoke(Call));
         }
-        // Command errored
-        catch (SystemCallException Exception) {
-            Results.Add(Exception.Message);
-        }
-        // Return success
+        // Return command call results
         return Results;
     }
     /// <inheritdoc cref="Execute(ReadOnlySpan{char}, ReadOnlySpan{Command})"/>
     public static async Task<List<object?>> ExecuteAsync(ReadOnlyMemory<char> Input, ReadOnlyMemory<Command> Commands) {
-        // Run commands in input
+        // Run command calls in input
         List<object?> Results = [];
-        try {
-            foreach (CommandCall Call in ParseAll(Input.Span, Commands.Span)) {
-                if (Call.Command.ExecuteAsync is null) {
-                    Results.Add(null);
-                    continue;
-                }
-                Results.Add(await Call.Command.ExecuteAsync.Invoke(Call));
+        foreach (CommandCall Call in ParseAll(Input.Span, Commands.Span)) {
+            if (Call.Command.ExecuteAsync is null) {
+                Results.Add(null);
+                continue;
             }
+            Results.Add(await Call.Command.ExecuteAsync.Invoke(Call));
         }
-        // Command errored
-        catch (SystemCallException Exception) {
-            Results.Add(Exception.Message);
-        }
-        // Return success
+        // Return command call results
         return Results;
     }
     /// <summary>
