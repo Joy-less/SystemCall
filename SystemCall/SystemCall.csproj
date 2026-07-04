@@ -30,8 +30,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="JsonhCs" Version="7.6.0" />
-    <PackageReference Include="LinkDotNet.StringBuilder" Version="3.4.1" />
+    <PackageReference Include="JsonhCs" Version="7.7.0" />
+    <PackageReference Include="LinkDotNet.StringBuilder" Version="3.4.2" />
   </ItemGroup>
 
   <ItemGroup>
